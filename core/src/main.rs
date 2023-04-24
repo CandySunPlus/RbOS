@@ -13,6 +13,7 @@ mod console;
 mod logging;
 mod sbi;
 mod sync;
+pub mod trap;
 
 global_asm!(include_str!("entry.asm"));
 
