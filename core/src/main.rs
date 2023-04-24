@@ -8,9 +8,11 @@ use core::panic::PanicInfo;
 use log::{debug, error, info, trace, warn};
 use sbi::shutdown;
 
+pub mod batch;
 mod console;
 mod logging;
 mod sbi;
+mod sync;
 
 global_asm!(include_str!("entry.asm"));
 
