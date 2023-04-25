@@ -27,6 +27,7 @@ fn panic_handler(panic_info: &panic::PanicInfo) -> ! {
 #[link_section = ".text.entry"]
 pub extern "C" fn _start() -> ! {
     clear_bss();
+    exit(main());
     unreachable!("after sys_exit!");
 }
 

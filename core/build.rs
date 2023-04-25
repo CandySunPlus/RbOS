@@ -1,7 +1,7 @@
 use std::fs::{read_dir, File};
 use std::io::{Result, Write};
 
-static TARGET_PATH: &str = "../usr/target/riscv64gc-unknown-none-elf/release/";
+static TARGET_PATH: &str = "../user/target/riscv64gc-unknown-none-elf/release/";
 
 fn main() {
     println!("cargo:return-if-changed=../user/src/");
@@ -45,8 +45,8 @@ _num_app:
             f,
             r#"
     .section .data
-    .global app_{0}_start,
-    .global app_{0}_end,
+    .global app_{0}_start
+    .global app_{0}_end
 app_{0}_start:
     .incbin "{2}{1}.bin"
 app_{0}_end:"#,

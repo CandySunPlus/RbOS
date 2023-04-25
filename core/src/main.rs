@@ -17,6 +17,7 @@ pub mod syscall;
 pub mod trap;
 
 global_asm!(include_str!("entry.asm"));
+global_asm!(include_str!("link_app.S"));
 
 #[panic_handler]
 fn panic(info: &PanicInfo) -> ! {
@@ -74,7 +75,9 @@ pub fn rust_main() -> ! {
 
     error!("[kernel] .bss [{:#x}, {:#x}]", sbss as usize, ebss as usize);
 
-    shutdown(false)
+    trap::init();
+    batch::init();
+    batch::run_next_app();
 }
 
 fn clear_bss() {
