@@ -1,7 +1,7 @@
 use std::fs::{read_dir, File};
 use std::io::{Result, Write};
 
-static TARGET_PATH: &'static str = "../usr/target/riscv64gc-unknown-none-elf/release/";
+static TARGET_PATH: &str = "../usr/target/riscv64gc-unknown-none-elf/release/";
 
 fn main() {
     println!("cargo:return-if-changed=../user/src/");
@@ -14,7 +14,6 @@ fn insert_app_data() -> Result<()> {
 
     let mut apps = read_dir("../user/src/bin")
         .unwrap()
-        .into_iter()
         .map(|dir_entry| {
             let mut name_with_ext = dir_entry.unwrap().file_name().into_string().unwrap();
             name_with_ext.drain(name_with_ext.find('.').unwrap()..name_with_ext.len());
