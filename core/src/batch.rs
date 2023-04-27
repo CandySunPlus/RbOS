@@ -2,8 +2,8 @@ use core::arch::asm;
 use core::{mem, slice};
 
 use lazy_static::lazy_static;
+use log::info;
 
-use crate::println;
 use crate::sbi::shutdown;
 use crate::sync::UPSafeCell;
 use crate::trap::TrapContext;
@@ -82,9 +82,9 @@ lazy_static! {
 
 impl AppManager {
     pub fn print_app_info(&self) {
-        println!("[kernel] num_app = {}", self.num_app);
+        info!("[kernel] num_app = {}", self.num_app);
         for i in 0..self.num_app {
-            println!(
+            info!(
                 "[kernel] app_{} [{:#x}, {:#x}]",
                 i,
                 self.app_start[i],
@@ -95,10 +95,10 @@ impl AppManager {
 
     unsafe fn load_app(&self, app_id: usize) {
         if app_id >= self.num_app {
-            println!("All applications completed!");
+            info!("All applications completed!");
             shutdown(false);
         }
-        println!("[kernel] Loadding app_{}", app_id);
+        info!("[kernel] Loadding app_{}", app_id);
 
         slice::from_raw_parts_mut(APP_BASE_ADDRESS as *mut u8, APP_SIZE_LIMIT).fill(0);
 

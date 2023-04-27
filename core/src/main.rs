@@ -24,14 +24,14 @@ global_asm!(include_str!("link_app.S"));
 #[panic_handler]
 fn panic(info: &PanicInfo) -> ! {
     if let Some(location) = info.location() {
-        println!(
+        error!(
             "Panicked at {}:{} {}",
             location.file(),
             location.line(),
             info.message().unwrap()
         );
     } else {
-        println!("Panicked: {}", info.message().unwrap());
+        error!("Panicked: {}", info.message().unwrap());
     }
 
     unsafe {
@@ -57,7 +57,7 @@ pub fn rust_main() -> ! {
     }
     clear_bss();
     logging::init();
-    println!("[kernel] Hello, world!");
+    info!("[kernel] Hello, world!");
 
     trace!(
         "[kernel] .text [{:#x}, {:#x}]",
