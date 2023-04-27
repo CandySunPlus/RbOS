@@ -39,7 +39,7 @@ $(KERNEL_BIN): kernel
 kernel:
 	@echo Platform: $(BOARD)
 	@cp src/linker-$(BOARD).ld src/linker.ld
-	@cargo build $(MODE_ARG)
+	@LOG=TRACE cargo build $(MODE_ARG)
 	@rm src/linker.ld
 
 clean:
@@ -60,7 +60,7 @@ run-inner: build
 		-machine virt \
 		-nographic \
 		-bios $(BOOTLOADER) \
-		-device loader,file=$(KERNEL_BIN),addr=$(KERNEL_ENTRY_PA)
+		-device loader,file=$(KERNEL_BIN),addr=$(KERNEL_ENTRY_PA) 
 
 debug: build
 	@tmux new-session -d \
