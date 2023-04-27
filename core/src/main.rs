@@ -7,11 +7,13 @@ use core::panic::PanicInfo;
 
 use log::{debug, error, info, trace, warn};
 use sbi::shutdown;
+use stack_trace::print_stack_trace;
 
 pub mod batch;
 mod console;
 mod logging;
 mod sbi;
+mod stack_trace;
 mod sync;
 pub mod syscall;
 pub mod trap;
@@ -31,6 +33,11 @@ fn panic(info: &PanicInfo) -> ! {
     } else {
         println!("Panicked: {}", info.message().unwrap());
     }
+
+    unsafe {
+        print_stack_trace();
+    }
+
     shutdown(true)
 }
 
