@@ -7,6 +7,7 @@ use log::error;
 use riscv::register::{mtvec, scause, stval, stvec};
 
 use crate::syscall::syscall;
+use crate::task::exit_current_and_run_next;
 
 global_asm!(include_str!("trap.asm"));
 
@@ -30,10 +31,12 @@ pub fn trap_handler(cx: &mut TrapContext) -> &mut TrapContext {
         scause::Trap::Exception(scause::Exception::StoreFault)
         | scause::Trap::Exception(scause::Exception::StorePageFault) => {
             error!("[kernel] PageFault in application, kernel killed it.");
+            exit_current_and_run_next();
             // run_next_app();
         }
         scause::Trap::Exception(scause::Exception::IllegalInstruction) => {
             error!("[kernel] IllegalInstruction in application, kernel killed it.");
+            exit_current_and_run_next();
             // run_next_app();
         }
         _ => {
