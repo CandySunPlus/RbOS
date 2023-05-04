@@ -22,29 +22,32 @@ fn set_app_link_script() -> Result<()> {
 
     linker_temp.read_to_string(&mut linker_temp_str)?;
 
-    read_dir("src/bin")?
+    let mut apps = read_dir("src/bin")?
         .map(|dir_entry| {
             let mut name_with_ext = dir_entry.unwrap().file_name().to_string_lossy().to_string();
             name_with_ext.drain(name_with_ext.find('.').unwrap()..);
             name_with_ext
         })
-        .enumerate()
-        .try_for_each(|(app_id, app)| {
-            let linker_content = linker_temp_str.replace(
-                &format!("{:x}", BASE_ADDRESS),
-                &format!("{:x}", BASE_ADDRESS + STEP * app_id),
-            );
+        .collect::<Vec<_>>();
 
-            let linker_file_path = dst.join(format!("linker_{}.ld", app));
-            let mut linker_file = BufWriter::new(File::create(&linker_file_path)?);
-            linker_file.write_all(linker_content.as_bytes())?;
+    apps.sort();
 
-            println!(
-                "cargo:rustc-link-arg-bin={app}=-T{}",
-                linker_file_path.to_str().unwrap(),
-                app = app
-            );
+    apps.iter().enumerate().try_for_each(|(app_id, app)| {
+        let linker_content = linker_temp_str.replace(
+            &format!("{:x}", BASE_ADDRESS),
+            &format!("{:x}", BASE_ADDRESS + STEP * app_id),
+        );
 
-            Ok(())
-        })
+        let linker_file_path = dst.join(format!("linker_{}.ld", app));
+        let mut linker_file = BufWriter::new(File::create(&linker_file_path)?);
+        linker_file.write_all(linker_content.as_bytes())?;
+
+        println!(
+            "cargo:rustc-link-arg-bin={app}=-T{}",
+            linker_file_path.to_str().unwrap(),
+            app = app
+        );
+
+        Ok(())
+    })
 }
