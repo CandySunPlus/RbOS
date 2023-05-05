@@ -50,7 +50,7 @@ lazy_static! {
 }
 
 impl TaskManager {
-    fn run_first_app(&self) -> ! {
+    fn run_first_task(&self) -> ! {
         let mut inner = self.inner.exclusive_access();
         let task0 = &mut inner.tasks[0];
         task0.task_status = TaskStatus::Running;
@@ -109,8 +109,8 @@ impl TaskManager {
     }
 }
 
-pub fn run_first_app() -> ! {
-    TASK_MANAGER.run_first_app()
+pub fn run_first_task() -> ! {
+    TASK_MANAGER.run_first_task()
 }
 
 fn run_next_task() {

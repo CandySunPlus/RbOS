@@ -86,7 +86,7 @@ pub fn rust_main() -> ! {
 
     trap::init();
     loader::load_apps();
-    task::run_first_app();
+    task::run_first_task();
 }
 
 fn clear_bss() {
