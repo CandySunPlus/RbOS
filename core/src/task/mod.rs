@@ -9,6 +9,7 @@ use crate::sbi::shutdown;
 use crate::sync::UPSafeCell;
 use crate::task::context::TaskContext;
 use crate::task::task::TaskStatus;
+use crate::timer::get_time_ms;
 
 mod context;
 mod switch;
@@ -22,6 +23,7 @@ pub struct TaskManager {
 pub struct TaskManagerInner {
     tasks: [TaskControlBlock; MAX_APP_NUM],
     current_task: usize,
+    stop_watch: usize,
 }
 
 lazy_static! {
@@ -30,6 +32,8 @@ lazy_static! {
         let mut tasks = [TaskControlBlock {
             task_cx: TaskContext::zero_init(),
             task_status: TaskStatus::UnInit,
+            user_time: 0,
+            kernel_time: 0,
         }; MAX_APP_NUM];
 
         for (i, task) in tasks.iter_mut().enumerate() {
@@ -43,10 +47,19 @@ lazy_static! {
                 UPSafeCell::new(TaskManagerInner {
                     tasks,
                     current_task: 0,
+                    stop_watch: 0,
                 })
             },
         }
     };
+}
+
+impl TaskManagerInner {
+    fn refresh_stop_watch(&mut self) -> usize {
+        let start_time = self.stop_watch;
+        self.stop_watch = get_time_ms();
+        self.stop_watch - start_time
+    }
 }
 
 impl TaskManager {
@@ -56,6 +69,7 @@ impl TaskManager {
         task0.task_status = TaskStatus::Running;
         let next_task_cx_ptr = &task0.task_cx as *const TaskContext;
 
+        inner.refresh_stop_watch();
         drop(inner);
 
         let mut _c = TaskContext::zero_init();
@@ -70,12 +84,18 @@ impl TaskManager {
     fn mark_current_suspended(&self) {
         let mut inner = self.inner.exclusive_access();
         let current = inner.current_task;
+        inner.tasks[current].kernel_time += inner.refresh_stop_watch();
         inner.tasks[current].task_status = TaskStatus::Ready;
     }
 
     fn mark_current_exited(&self) {
         let mut inner = self.inner.exclusive_access();
         let current = inner.current_task;
+        inner.tasks[current].kernel_time += inner.refresh_stop_watch();
+        info!(
+            "[task {} exited, user_time: {}, kernel_time: {}]",
+            current, inner.tasks[current].user_time, inner.tasks[current].kernel_time
+        );
         inner.tasks[current].task_status = TaskStatus::Exited;
     }
 
@@ -107,6 +127,18 @@ impl TaskManager {
             shutdown(false);
         }
     }
+
+    fn user_time_start(&self) {
+        let mut inner = self.inner.exclusive_access();
+        let current = inner.current_task;
+        inner.tasks[current].kernel_time += inner.refresh_stop_watch();
+    }
+
+    fn user_time_end(&self) {
+        let mut inner = self.inner.exclusive_access();
+        let current = inner.current_task;
+        inner.tasks[current].user_time += inner.refresh_stop_watch();
+    }
 }
 
 pub fn run_first_task() -> ! {
@@ -133,4 +165,12 @@ pub fn suspend_current_and_run_next() {
 pub fn exit_current_and_run_next() {
     mark_current_exited();
     run_next_task();
+}
+
+pub fn user_time_start() {
+    TASK_MANAGER.user_time_start();
+}
+
+pub fn user_time_end() {
+    TASK_MANAGER.user_time_end();
 }

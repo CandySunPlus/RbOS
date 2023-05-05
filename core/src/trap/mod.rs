@@ -7,7 +7,9 @@ use log::error;
 use riscv::register::{mtvec, scause, sie, stval, stvec};
 
 use crate::syscall::syscall;
-use crate::task::{exit_current_and_run_next, suspend_current_and_run_next};
+use crate::task::{
+    exit_current_and_run_next, suspend_current_and_run_next, user_time_end, user_time_start,
+};
 use crate::timer::set_next_trigger;
 
 global_asm!(include_str!("trap.asm"));
@@ -21,6 +23,7 @@ pub fn init() {
 
 #[no_mangle]
 pub fn trap_handler(cx: &mut TrapContext) -> &mut TrapContext {
+    user_time_end();
     let scause = scause::read();
     let stval = stval::read();
 
@@ -52,6 +55,7 @@ pub fn trap_handler(cx: &mut TrapContext) -> &mut TrapContext {
             );
         }
     }
+    user_time_start();
     cx
 }
 
