@@ -4,10 +4,11 @@ use core::arch::global_asm;
 
 pub use context::TrapContext;
 use log::error;
-use riscv::register::{mtvec, scause, stval, stvec};
+use riscv::register::{mtvec, scause, sie, stval, stvec};
 
 use crate::syscall::syscall;
-use crate::task::exit_current_and_run_next;
+use crate::task::{exit_current_and_run_next, suspend_current_and_run_next};
+use crate::timer::set_next_trigger;
 
 global_asm!(include_str!("trap.asm"));
 
@@ -39,6 +40,10 @@ pub fn trap_handler(cx: &mut TrapContext) -> &mut TrapContext {
             exit_current_and_run_next();
             // run_next_app();
         }
+        scause::Trap::Interrupt(scause::Interrupt::SupervisorTimer) => {
+            set_next_trigger();
+            suspend_current_and_run_next();
+        }
         _ => {
             panic!(
                 "Unsupported trap {:?}, stval = {:#x}!",
@@ -48,4 +53,10 @@ pub fn trap_handler(cx: &mut TrapContext) -> &mut TrapContext {
         }
     }
     cx
+}
+
+pub fn enable_timer_interrupt() {
+    unsafe {
+        sie::set_stimer();
+    }
 }
