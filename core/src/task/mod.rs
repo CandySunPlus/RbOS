@@ -9,7 +9,7 @@ use crate::sbi::shutdown;
 use crate::sync::UPSafeCell;
 use crate::task::context::TaskContext;
 use crate::task::task::TaskStatus;
-use crate::timer::get_time_ms;
+use crate::timer::get_time_us;
 
 mod context;
 mod switch;
@@ -57,7 +57,7 @@ lazy_static! {
 impl TaskManagerInner {
     fn refresh_stop_watch(&mut self) -> usize {
         let start_time = self.stop_watch;
-        self.stop_watch = get_time_ms();
+        self.stop_watch = get_time_us();
         self.stop_watch - start_time
     }
 }
@@ -93,7 +93,7 @@ impl TaskManager {
         let current = inner.current_task;
         inner.tasks[current].kernel_time += inner.refresh_stop_watch();
         info!(
-            "[task {} exited, user_time: {}, kernel_time: {}]",
+            "[task {} exited, user_time: {}us, kernel_time: {}us]",
             current, inner.tasks[current].user_time, inner.tasks[current].kernel_time
         );
         inner.tasks[current].task_status = TaskStatus::Exited;
