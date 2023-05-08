@@ -1,6 +1,7 @@
 #![no_std]
 #![no_main]
 #![feature(panic_info_message)]
+#![feature(alloc_error_handler)]
 
 use core::arch::global_asm;
 use core::panic::PanicInfo;
@@ -9,10 +10,13 @@ use log::{debug, error, info, trace, warn};
 use sbi::shutdown;
 use stack_trace::print_stack_trace;
 
+extern crate alloc;
+
 mod config;
 mod console;
 pub mod loader;
 mod logging;
+mod mm;
 mod sbi;
 mod stack_trace;
 mod sync;
@@ -84,6 +88,10 @@ pub fn rust_main() -> ! {
     );
 
     error!("[kernel] .bss [{:#x}, {:#x}]", sbss as usize, ebss as usize);
+
+    mm::init();
+
+    info!("[kernel] back to world!");
 
     trap::init();
     loader::load_apps();

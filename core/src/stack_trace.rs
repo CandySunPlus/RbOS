@@ -1,5 +1,4 @@
 use core::arch::asm;
-use core::ptr;
 
 use log::error;
 
@@ -9,7 +8,7 @@ pub unsafe fn print_stack_trace() {
 
     error!("== Begin stack trace ==");
 
-    while fp != ptr::null() {
+    while fp.is_null() {
         let saved_ra = *fp.sub(1);
         let saved_fp = *fp.sub(2);
 
