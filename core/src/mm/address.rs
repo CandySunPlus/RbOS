@@ -11,11 +11,13 @@ pub struct PhysAddr(pub usize);
 #[derive(Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
 pub struct VirtAddr(pub usize);
 
-/// 63       54 53    28 27    19 18    10 9    8 7   6   5   4   3   2   1   0
-/// ┌──────────┬────────┬────────┬────────┬─────┬───┬───┬───┬───┬───┬───┬───┬───┐
-/// │ Reserved │ PPN[2] │ PPN[1] │ PPN[0] │ RSW │ D │ A │ G │ U │ X │ W │ R │ V │
-/// └──────────┴────────┴────────┴────────┴─────┴───┴───┴───┴───┴───┴───┴───┴───┘
-///      10        26       9        9       2    1   1   1   1   1   1   1   1
+///  0                   1                   2                   3           
+///  0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5
+/// +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+/// |     Reserved      |                     PPN[2]                        |
+/// |-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-|
+/// |      PPN[1]     |      PPN[0]     |RSW|D|A|G|U|X|W|R|V|               
+/// +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
 #[derive(Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
 pub struct PhysPageNum(pub usize);
 
@@ -24,28 +26,28 @@ pub struct VirtPageNum(pub usize);
 
 impl From<usize> for PhysAddr {
     fn from(value: usize) -> Self {
-        // Use mask to reserve low bits.
+        // Use mask to reserve low 56 bits.
         Self(value & ((1 << PA_WIDTH_SV39) - 1))
     }
 }
 
 impl From<usize> for PhysPageNum {
     fn from(value: usize) -> Self {
-        // Use mask to reserve low bits.
+        // Use mask to reserve low 44 bits.
         Self(value & ((1 << PPN_WIDTH_SV39) - 1))
     }
 }
 
 impl From<usize> for VirtAddr {
     fn from(value: usize) -> Self {
-        // Use mask to reserve low bits.
+        // Use mask to reserve low 39 bits.
         Self(value & ((1 << VA_WIDTH_SV39) - 1))
     }
 }
 
 impl From<usize> for VirtPageNum {
     fn from(value: usize) -> Self {
-        // Use mask to reserve low bits.
+        // Use mask to reserve low 27 bits.
         Self(value & ((1 << VPN_WIDTH_SV39) - 1))
     }
 }
