@@ -1,13 +1,18 @@
 use alloc::collections::BTreeMap;
+use alloc::sync::Arc;
 use alloc::vec;
+use core::arch::asm;
 
 use bitflags::bitflags;
+use lazy_static::lazy_static;
 use log::info;
+use riscv::register::satp;
 
 use super::address::{PhysAddr, PhysPageNum, VPNRange, VirtAddr, VirtPageNum};
 use super::frame_allocator::{frame_alloc, FrameTracker};
 use super::page_table::{PTEFlags, PageTable};
 use crate::config::{MEMORY_END, PAGE_SIZE, TRAMPOLINE, TRAP_CONTEXT, USER_STACK_SIZE};
+use crate::sync::UPSafeCell;
 
 #[derive(Clone, Copy, PartialEq, Debug)]
 pub enum MapType {
@@ -127,6 +132,11 @@ extern "C" {
     fn strampoline();
 }
 
+lazy_static! {
+    pub static ref KERNEL_SPACE: Arc<UPSafeCell<MemorySet>> =
+        Arc::new(unsafe { UPSafeCell::new(MemorySet::new_kernel()) });
+}
+
 pub struct MemorySet {
     page_table: PageTable,
     areas: vec::Vec<MapArea>,
@@ -166,6 +176,14 @@ impl MemorySet {
             PhysAddr::from(strampoline as usize).into(),
             PTEFlags::R | PTEFlags::X,
         );
+    }
+
+    pub fn activate(&self) {
+        let satp = self.page_table.token();
+        unsafe {
+            satp::write(satp);
+            asm!("sfence.vma");
+        }
     }
 
     pub fn new_kernel() -> Self {
