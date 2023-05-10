@@ -123,6 +123,18 @@ impl From<PhysPageNum> for usize {
     }
 }
 
+impl From<VirtAddr> for usize {
+    fn from(value: VirtAddr) -> Self {
+        value.0
+    }
+}
+
+impl From<VirtPageNum> for usize {
+    fn from(value: VirtPageNum) -> Self {
+        value.0
+    }
+}
+
 impl PhysAddr {
     pub fn page_offset(&self) -> usize {
         // Use mask to reserve high bits.
