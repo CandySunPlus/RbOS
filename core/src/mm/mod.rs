@@ -1,10 +1,12 @@
-use self::memory_set::KERNEL_SPACE;
-
 mod address;
 mod frame_allocator;
 mod heap_allocator;
 mod memory_set;
 mod page_table;
+
+pub use address::{PhysPageNum, VirtAddr};
+pub use memory_set::{MapPermission, MemorySet, KERNEL_SPACE};
+pub use page_table::translated_byte_buffer;
 
 pub fn init() {
     heap_allocator::init_heap();

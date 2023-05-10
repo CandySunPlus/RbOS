@@ -1,15 +1,17 @@
+use alloc::vec;
+
 use lazy_static::lazy_static;
 use log::info;
 
 use self::switch::__switch;
 use self::task::TaskControlBlock;
-use crate::config::MAX_APP_NUM;
-use crate::loader::{get_num_app, init_app_cx};
+use crate::loader::{get_app_data, get_num_app};
 use crate::sbi::shutdown;
 use crate::sync::UPSafeCell;
 use crate::task::context::TaskContext;
 use crate::task::task::TaskStatus;
 use crate::timer::get_time_us;
+use crate::trap::TrapContext;
 
 mod context;
 mod switch;
@@ -21,24 +23,20 @@ pub struct TaskManager {
 }
 
 pub struct TaskManagerInner {
-    tasks: [TaskControlBlock; MAX_APP_NUM],
+    tasks: vec::Vec<TaskControlBlock>,
     current_task: usize,
     stop_watch: usize,
 }
 
 lazy_static! {
     pub static ref TASK_MANAGER: TaskManager = {
+        info!("init TASK_MANAGER");
         let num_app = get_num_app();
-        let mut tasks = [TaskControlBlock {
-            task_cx: TaskContext::zero_init(),
-            task_status: TaskStatus::UnInit,
-            user_time: 0,
-            kernel_time: 0,
-        }; MAX_APP_NUM];
+        info!("num_app = {num_app}");
+        let mut tasks = vec::Vec::new();
 
-        for (i, task) in tasks.iter_mut().enumerate() {
-            task.task_cx = TaskContext::goto_restore(init_app_cx(i));
-            task.task_status = TaskStatus::Ready;
+        for i in 0..num_app {
+            tasks.push(TaskControlBlock::new(get_app_data(i), i));
         }
 
         TaskManager {
@@ -139,6 +137,17 @@ impl TaskManager {
         let current = inner.current_task;
         inner.tasks[current].user_time += inner.refresh_stop_watch();
     }
+
+    fn get_current_token(&self) -> usize {
+        let inner = self.inner.exclusive_access();
+        let current = inner.current_task;
+        inner.tasks[current].get_user_token()
+    }
+
+    fn get_current_trap_cx(&self) -> &'static mut TrapContext {
+        let inner = self.inner.exclusive_access();
+        inner.tasks[inner.current_task].get_trap_cx()
+    }
 }
 
 pub fn run_first_task() -> ! {
@@ -173,4 +182,12 @@ pub fn user_time_start() {
 
 pub fn user_time_end() {
     TASK_MANAGER.user_time_end();
+}
+
+pub fn current_user_token() -> usize {
+    TASK_MANAGER.get_current_token()
+}
+
+pub fn current_trap_cx() -> &'static mut TrapContext {
+    TASK_MANAGER.get_current_trap_cx()
 }

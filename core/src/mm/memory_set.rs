@@ -10,7 +10,7 @@ use riscv::register::satp;
 
 use super::address::{PhysAddr, PhysPageNum, VPNRange, VirtAddr, VirtPageNum};
 use super::frame_allocator::{frame_alloc, FrameTracker};
-use super::page_table::{PTEFlags, PageTable};
+use super::page_table::{PTEFlags, PageTable, PageTableEntry};
 use crate::config::{MEMORY_END, PAGE_SIZE, TRAMPOLINE, TRAP_CONTEXT, USER_STACK_SIZE};
 use crate::sync::UPSafeCell;
 
@@ -65,6 +65,7 @@ impl MapArea {
         }
     }
 
+    #[allow(unused)]
     pub fn unmap(&mut self, page_table: &mut PageTable) {
         for vpn in self.vpn_range {
             self.unmap_once(page_table, vpn);
@@ -86,6 +87,7 @@ impl MapArea {
         page_table.map(vpn, ppn, pte_flags);
     }
 
+    #[allow(unused)]
     fn unmap_once(&mut self, page_table: &mut PageTable, vpn: VirtPageNum) {
         if self.map_type == MapType::Framed {
             self.data_frames.remove(&vpn);
@@ -184,6 +186,14 @@ impl MemorySet {
             satp::write(satp);
             asm!("sfence.vma");
         }
+    }
+
+    pub fn translate(&self, vpn: VirtPageNum) -> Option<PageTableEntry> {
+        self.page_table.translate(vpn)
+    }
+
+    pub fn token(&self) -> usize {
+        self.page_table.token()
     }
 
     pub fn new_kernel() -> Self {
