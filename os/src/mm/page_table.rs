@@ -179,6 +179,7 @@ pub fn translated_byte_buffer(
     v
 }
 
+#[allow(unused)]
 pub fn translated_ref<T>(token: usize, ptr: *const T) -> &'static T {
     let page_table = PageTable::from_token(token);
     let va = VirtAddr::from(ptr as usize);

@@ -65,6 +65,7 @@ impl TaskControlBlock {
     }
 }
 
+#[allow(unused)]
 #[derive(Clone, Copy, PartialEq)]
 pub enum TaskStatus {
     UnInit,

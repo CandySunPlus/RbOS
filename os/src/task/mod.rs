@@ -11,7 +11,7 @@ use crate::sbi::shutdown;
 use crate::sync::UPSafeCell;
 use crate::task::context::TaskContext;
 pub use crate::task::task::TaskStatus;
-use crate::timer::{get_time_ms, get_time_us};
+use crate::timer::get_time_us;
 use crate::trap::TrapContext;
 
 mod context;

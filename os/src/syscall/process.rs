@@ -1,4 +1,4 @@
-use log::{info, trace};
+use log::info;
 
 use crate::mm::translated_mut;
 use crate::task::{

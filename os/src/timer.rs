@@ -19,6 +19,7 @@ pub fn get_time_us() -> usize {
     time::read() / (CLOCK_FREQ / MICRO_PRE_SEC)
 }
 
+#[allow(unused)]
 pub fn get_time_ms() -> usize {
     time::read() / (CLOCK_FREQ / MESC_PRE_SEC)
 }
