@@ -5,12 +5,13 @@ use log::info;
 
 use self::switch::__switch;
 use self::task::TaskControlBlock;
+use crate::config::MAX_SYSCALL_NUM;
 use crate::loader::{get_app_data, get_num_app};
 use crate::sbi::shutdown;
 use crate::sync::UPSafeCell;
 use crate::task::context::TaskContext;
-use crate::task::task::TaskStatus;
-use crate::timer::get_time_us;
+pub use crate::task::task::TaskStatus;
+use crate::timer::{get_time_ms, get_time_us};
 use crate::trap::TrapContext;
 
 mod context;
@@ -26,6 +27,14 @@ pub struct TaskManagerInner {
     tasks: vec::Vec<TaskControlBlock>,
     current_task: usize,
     stop_watch: usize,
+}
+
+#[allow(dead_code)]
+#[derive(Clone)]
+pub struct TaskInfo {
+    status: TaskStatus,
+    syscall_times: [u32; MAX_SYSCALL_NUM],
+    time: usize,
 }
 
 lazy_static! {
@@ -65,6 +74,7 @@ impl TaskManager {
         let mut inner = self.inner.exclusive_access();
         let task0 = &mut inner.tasks[0];
         task0.task_status = TaskStatus::Running;
+        task0.task_time = get_time_us();
         let next_task_cx_ptr = &task0.task_cx as *const TaskContext;
 
         inner.refresh_stop_watch();
@@ -115,6 +125,11 @@ impl TaskManager {
             let current_task_cx_ptr = &mut inner.tasks[current].task_cx as *mut TaskContext;
             let next_task_cx_ptr = &inner.tasks[next].task_cx as *const TaskContext;
 
+            let current_time = get_time_us();
+
+            inner.tasks[current].task_time += current_time - inner.tasks[current].task_time;
+            inner.tasks[next].task_time = current_time;
+
             drop(inner);
 
             unsafe {
@@ -147,6 +162,22 @@ impl TaskManager {
     fn get_current_trap_cx(&self) -> &'static mut TrapContext {
         let inner = self.inner.exclusive_access();
         inner.tasks[inner.current_task].get_trap_cx()
+    }
+
+    fn inc_syscall_times(&self, syscall_id: usize) {
+        let mut inner = self.inner.exclusive_access();
+        let current = inner.current_task;
+        inner.tasks[current].syscall_times[syscall_id] += 1;
+    }
+
+    fn get_current_taskinfo(&self) -> TaskInfo {
+        let inner = self.inner.exclusive_access();
+        let current_task = &inner.tasks[inner.current_task];
+        TaskInfo {
+            status: current_task.task_status,
+            syscall_times: current_task.syscall_times,
+            time: current_task.task_time / 1000,
+        }
     }
 }
 
@@ -190,4 +221,12 @@ pub fn current_user_token() -> usize {
 
 pub fn current_trap_cx() -> &'static mut TrapContext {
     TASK_MANAGER.get_current_trap_cx()
+}
+
+pub fn get_taskinfo() -> TaskInfo {
+    TASK_MANAGER.get_current_taskinfo()
+}
+
+pub fn inc_syscall_times(syscall_id: usize) {
+    TASK_MANAGER.inc_syscall_times(syscall_id);
 }

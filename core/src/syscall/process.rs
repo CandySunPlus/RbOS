@@ -1,7 +1,18 @@
-use log::info;
+use log::{info, trace};
 
-use crate::task::{exit_current_and_run_next, suspend_current_and_run_next};
-use crate::timer::get_time_ms;
+use crate::mm::translated_mut;
+use crate::task::{
+    current_user_token, exit_current_and_run_next, get_taskinfo, suspend_current_and_run_next,
+    TaskInfo,
+};
+use crate::timer::get_time_us;
+
+#[repr(C)]
+#[derive(Debug)]
+pub struct TimeVal {
+    pub sec: usize,
+    pub usec: usize,
+}
 
 pub fn sys_exit(exit_code: i32) -> ! {
     info!("[kernel] Application exit with code {}", exit_code);
@@ -14,6 +25,19 @@ pub fn sys_yield() -> isize {
     0
 }
 
-pub fn sys_get_time() -> isize {
-    get_time_ms() as isize
+pub fn sys_get_time(ts: *mut TimeVal, _tz: usize) -> isize {
+    let ts = translated_mut(current_user_token(), ts);
+    let us = get_time_us();
+    *ts = TimeVal {
+        sec: us / 1_000_000,
+        usec: us % 1_000_000,
+    };
+    0
+}
+
+pub fn sys_task_info(ti: *mut TaskInfo) -> isize {
+    let taskinfo = get_taskinfo();
+    let ti = translated_mut(current_user_token(), ti);
+    *ti = taskinfo.clone();
+    0
 }

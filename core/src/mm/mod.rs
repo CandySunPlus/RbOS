@@ -6,7 +6,7 @@ mod page_table;
 
 pub use address::{PhysPageNum, VirtAddr};
 pub use memory_set::{MapPermission, MemorySet, KERNEL_SPACE};
-pub use page_table::translated_byte_buffer;
+pub use page_table::{translated_byte_buffer, translated_mut, translated_ref};
 
 pub fn init() {
     heap_allocator::init_heap();

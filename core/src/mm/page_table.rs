@@ -2,7 +2,7 @@ use alloc::vec;
 
 use bitflags::bitflags;
 
-use super::address::{PhysPageNum, VirtPageNum};
+use super::address::{PhysAddr, PhysPageNum, VirtPageNum};
 use super::frame_allocator::{frame_alloc, FrameTracker};
 use super::VirtAddr;
 
@@ -136,6 +136,14 @@ impl PageTable {
         self.find_pte(vpn).map(|pte| *pte)
     }
 
+    pub fn translate_va(&self, va: VirtAddr) -> Option<PhysAddr> {
+        self.translate(va.floor()).map(|pte| {
+            let pa: PhysAddr = pte.ppn().into();
+            let offset = va.page_offset();
+            (Into::<usize>::into(pa) + offset).into()
+        })
+    }
+
     pub fn token(&self) -> usize {
         8usize << 60 | self.root_ppn.0
     }
@@ -169,4 +177,18 @@ pub fn translated_byte_buffer(
     }
 
     v
+}
+
+pub fn translated_ref<T>(token: usize, ptr: *const T) -> &'static T {
+    let page_table = PageTable::from_token(token);
+    let va = VirtAddr::from(ptr as usize);
+    let pa = page_table.translate_va(va).unwrap();
+    pa.get_ref()
+}
+
+pub fn translated_mut<T>(token: usize, ptr: *mut T) -> &'static mut T {
+    let page_table = PageTable::from_token(token);
+    let va = VirtAddr::from(ptr as usize);
+    let pa = page_table.translate_va(va).unwrap();
+    pa.get_mut()
 }
