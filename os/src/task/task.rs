@@ -90,6 +90,14 @@ impl TaskControlBlock {
             None
         }
     }
+
+    pub fn mmap(&mut self, start: usize, len: usize, port: usize) -> bool {
+        self.memory_set.mmap(start, len, port)
+    }
+
+    pub fn munmap(&mut self, start: usize, len: usize) -> bool {
+        self.memory_set.munmap(start, len)
+    }
 }
 
 #[allow(unused)]

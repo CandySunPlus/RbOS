@@ -398,4 +398,79 @@ impl MemorySet {
             false
         }
     }
+
+    fn is_mapped_area(&self, start_va: VirtAddr, end_va: VirtAddr) -> bool {
+        self.areas.iter().any(|area| {
+            area.vpn_range
+                .is_overlapped(&VPNRange::new(start_va.into(), end_va.into()))
+        })
+    }
+
+    pub fn mmap(&mut self, start: usize, len: usize, port: usize) -> bool {
+        if port & !0x7 != 0 || port & 0x7 == 0 || len > 1 << 30 {
+            false
+        } else {
+            let start_va = VirtAddr::from(start);
+            if start_va != start_va.floor().into() {
+                return false;
+            }
+            let end_va = VirtAddr::from(start + len).ceil().into();
+
+            if self.is_mapped_area(start_va, end_va) {
+                return false;
+            }
+
+            self.insert_framed_area(
+                start_va,
+                end_va,
+                MapPermission::from_bits((port << 1 | 0b10000) as u8).unwrap(),
+            );
+
+            true
+        }
+    }
+
+    pub fn munmap(&mut self, start: usize, len: usize) -> bool {
+        let mut start_va = VirtAddr::from(start);
+
+        if start_va != start_va.floor().into() {
+            return false;
+        }
+
+        let end_va: VirtAddr = VirtAddr::from(start + len).ceil().into();
+
+        let mut to_unmap = self
+            .areas
+            .iter()
+            .enumerate()
+            .filter(|(_i, area)| {
+                area.vpn_range
+                    .is_overlapped(&VPNRange::new(start_va.into(), end_va.into()))
+            })
+            .map(|(i, _area)| i)
+            .collect::<vec::Vec<_>>();
+
+        to_unmap.sort_by_key(|i| self.areas[*i].vpn_range.get_start());
+
+        for &i in to_unmap.iter() {
+            if start_va == self.areas[i].vpn_range.get_start().into() {
+                start_va = self.areas[i].vpn_range.get_end().into();
+            } else {
+                return false;
+            }
+        }
+
+        if start_va != end_va {
+            return false;
+        }
+
+        to_unmap.sort();
+
+        for i in to_unmap {
+            self.areas[i].unmap(&mut self.page_table);
+            self.areas.remove(i);
+        }
+
+        true
+    }
 }

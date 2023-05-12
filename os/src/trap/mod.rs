@@ -51,15 +51,15 @@ pub fn trap_handler() -> ! {
             cx.x[10] = syscall(cx.x[17], [cx.x[10], cx.x[11], cx.x[12]]) as usize;
         }
         scause::Trap::Exception(scause::Exception::StoreFault)
-        | scause::Trap::Exception(scause::Exception::StorePageFault) => {
-            error!("[kernel] PageFault in application, kernel killed it.");
+        | scause::Trap::Exception(scause::Exception::StorePageFault)
+        | scause::Trap::Exception(scause::Exception::LoadFault)
+        | scause::Trap::Exception(scause::Exception::LoadPageFault) => {
+            error!("[kernel] PageFault in application, bad addr = {:#x}, bad instruction = {:#x}, kernel killed it.", stval, cx.sepc);
             exit_current_and_run_next();
-            // run_next_app();
         }
         scause::Trap::Exception(scause::Exception::IllegalInstruction) => {
             error!("[kernel] IllegalInstruction in application, kernel killed it.");
             exit_current_and_run_next();
-            // run_next_app();
         }
         scause::Trap::Interrupt(scause::Interrupt::SupervisorTimer) => {
             set_next_trigger();

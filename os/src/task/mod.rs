@@ -185,6 +185,18 @@ impl TaskManager {
         let current = inner.current_task;
         inner.tasks[current].change_program_brk(size)
     }
+
+    fn mmap(&self, start: usize, len: usize, port: usize) -> bool {
+        let mut inner = self.inner.exclusive_access();
+        let current = inner.current_task;
+        inner.tasks[current].mmap(start, len, port)
+    }
+
+    fn munmap(&self, start: usize, len: usize) -> bool {
+        let mut inner = self.inner.exclusive_access();
+        let current = inner.current_task;
+        inner.tasks[current].munmap(start, len)
+    }
 }
 
 pub fn run_first_task() -> ! {
@@ -239,4 +251,12 @@ pub fn inc_syscall_times(syscall_id: usize) {
 
 pub fn change_program_brk(size: i32) -> Option<usize> {
     TASK_MANAGER.change_current_program_brk(size)
+}
+
+pub fn mmap(start: usize, len: usize, port: usize) -> bool {
+    TASK_MANAGER.mmap(start, len, port)
+}
+
+pub fn munmap(start: usize, len: usize) -> bool {
+    TASK_MANAGER.munmap(start, len)
 }

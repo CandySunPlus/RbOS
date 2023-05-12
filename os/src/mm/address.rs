@@ -286,6 +286,12 @@ where
     pub fn get_end(&self) -> T {
         self.r
     }
+
+    pub fn is_overlapped(&self, other: &Self) -> bool {
+        (self.l <= other.l && other.l < self.r)
+            || (self.l < other.r && other.r <= self.r)
+            || (other.l < self.l && self.r < other.r)
+    }
 }
 
 pub type VPNRange = SimpleRange<VirtPageNum>;
