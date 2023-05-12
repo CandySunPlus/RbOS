@@ -48,3 +48,11 @@ pub fn sys_sbrk(size: i32) -> isize {
         -1
     }
 }
+
+pub fn sys_mmap(start: usize, len: usize, port: usize) -> isize {
+    0
+}
+
+pub fn sys_munmap(start: usize, len: usize) -> isize {
+    0
+}
