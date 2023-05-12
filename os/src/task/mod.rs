@@ -179,6 +179,12 @@ impl TaskManager {
             time: current_task.task_time / 1000,
         }
     }
+
+    fn change_current_program_brk(&self, size: i32) -> Option<usize> {
+        let mut inner = self.inner.exclusive_access();
+        let current = inner.current_task;
+        inner.tasks[current].change_program_brk(size)
+    }
 }
 
 pub fn run_first_task() -> ! {
@@ -229,4 +235,8 @@ pub fn get_taskinfo() -> TaskInfo {
 
 pub fn inc_syscall_times(syscall_id: usize) {
     TASK_MANAGER.inc_syscall_times(syscall_id);
+}
+
+pub fn change_program_brk(size: i32) -> Option<usize> {
+    TASK_MANAGER.change_current_program_brk(size)
 }

@@ -1,3 +1,5 @@
+use log::info;
+
 use super::context::TaskContext;
 use crate::config::{kernel_stack_position, MAX_SYSCALL_NUM, TRAP_CONTEXT};
 use crate::mm::{MapPermission, MemorySet, PhysPageNum, VirtAddr, KERNEL_SPACE};
@@ -12,6 +14,8 @@ pub struct TaskControlBlock {
     pub memory_set: MemorySet,
     pub trap_cx_ppn: PhysPageNum,
     pub base_size: usize,
+    pub program_brk: usize,
+    pub heap_bottom: usize,
     pub syscall_times: [u32; MAX_SYSCALL_NUM],
 }
 
@@ -44,6 +48,8 @@ impl TaskControlBlock {
             memory_set,
             trap_cx_ppn,
             base_size: user_sp,
+            program_brk: user_sp,
+            heap_bottom: user_sp,
             syscall_times: [0; MAX_SYSCALL_NUM],
         };
 
@@ -62,6 +68,29 @@ impl TaskControlBlock {
 
     pub fn get_trap_cx(&self) -> &'static mut TrapContext {
         self.trap_cx_ppn.get_mut()
+    }
+
+    pub fn change_program_brk(&mut self, size: i32) -> Option<usize> {
+        let old_break = self.program_brk;
+        let new_break = self.program_brk as isize + size as isize;
+        if new_break < self.heap_bottom as isize {
+            return None;
+        }
+
+        let result = if size < 0 {
+            self.memory_set
+                .shrink_to(VirtAddr(self.heap_bottom), VirtAddr(new_break as usize))
+        } else {
+            self.memory_set
+                .append_to(VirtAddr(self.heap_bottom), VirtAddr(new_break as usize))
+        };
+
+        if result {
+            self.program_brk = new_break as usize;
+            Some(old_break)
+        } else {
+            None
+        }
     }
 }
 

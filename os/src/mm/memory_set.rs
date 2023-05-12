@@ -346,6 +346,16 @@ impl MemorySet {
 
         memory_set.push(
             MapArea::new(
+                user_stack_top.into(),
+                user_stack_top.into(),
+                MapType::Framed,
+                MapPermission::R | MapPermission::W | MapPermission::U,
+            ),
+            None,
+        );
+
+        memory_set.push(
+            MapArea::new(
                 TRAP_CONTEXT.into(),
                 TRAMPOLINE.into(),
                 MapType::Framed,

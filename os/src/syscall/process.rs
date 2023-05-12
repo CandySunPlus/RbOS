@@ -2,8 +2,8 @@ use log::info;
 
 use crate::mm::translated_mut;
 use crate::task::{
-    current_user_token, exit_current_and_run_next, get_taskinfo, suspend_current_and_run_next,
-    TaskInfo,
+    change_program_brk, current_user_token, exit_current_and_run_next, get_taskinfo,
+    suspend_current_and_run_next, TaskInfo,
 };
 use crate::timer::get_time_us;
 
@@ -39,4 +39,12 @@ pub fn sys_task_info(ti: *mut TaskInfo) -> isize {
     let ti = translated_mut(current_user_token(), ti);
     *ti = get_taskinfo();
     0
+}
+
+pub fn sys_sbrk(size: i32) -> isize {
+    if let Some(old_brk) = change_program_brk(size) {
+        old_brk as isize
+    } else {
+        -1
+    }
 }
