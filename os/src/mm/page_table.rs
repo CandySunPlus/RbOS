@@ -77,16 +77,14 @@ impl PageTable {
     }
 
     fn find_pte_create(&mut self, vpn: VirtPageNum) -> Option<&mut PageTableEntry> {
-        let idxs = vpn.indexes();
         let mut ppn = self.root_ppn;
         let mut result = None;
-        for i in 0..3 {
-            let pte = &mut ppn.get_pte_array()[idxs[i]];
+        for (i, idx) in vpn.indexes().iter().enumerate() {
+            let pte = &mut ppn.get_pte_array()[*idx];
             if i == 2 {
                 result = Some(pte);
                 break;
             }
-
             if !pte.is_valid() {
                 let frame = frame_alloc().unwrap();
                 *pte = PageTableEntry::new(frame.ppn, PTEFlags::V);
@@ -99,12 +97,11 @@ impl PageTable {
     }
 
     fn find_pte(&self, vpn: VirtPageNum) -> Option<&mut PageTableEntry> {
-        let idxs = vpn.indexes();
         let mut ppn = self.root_ppn;
         let mut result = None;
 
-        for i in 0..3 {
-            let pte = &mut ppn.get_pte_array()[idxs[i]];
+        for (i, idx) in vpn.indexes().iter().enumerate() {
+            let pte = &mut ppn.get_pte_array()[*idx];
             if i == 2 {
                 result = Some(pte);
                 break;

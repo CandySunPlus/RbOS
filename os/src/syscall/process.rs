@@ -36,8 +36,7 @@ pub fn sys_get_time(ts: *mut TimeVal, _tz: usize) -> isize {
 }
 
 pub fn sys_task_info(ti: *mut TaskInfo) -> isize {
-    let taskinfo = get_taskinfo();
     let ti = translated_mut(current_user_token(), ti);
-    *ti = taskinfo.clone();
+    *ti = get_taskinfo();
     0
 }
