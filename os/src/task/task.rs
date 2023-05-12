@@ -1,5 +1,3 @@
-use log::info;
-
 use super::context::TaskContext;
 use crate::config::{kernel_stack_position, MAX_SYSCALL_NUM, TRAP_CONTEXT};
 use crate::mm::{MapPermission, MemorySet, PhysPageNum, VirtAddr, KERNEL_SPACE};
