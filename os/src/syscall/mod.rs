@@ -1,8 +1,9 @@
 use self::fs::{sys_read, sys_write};
 use self::process::{
-    sys_exit, sys_get_time, sys_mmap, sys_munmap, sys_sbrk, sys_task_info, sys_yield,
+    sys_exec, sys_exit, sys_fork, sys_get_time, sys_mmap, sys_munmap, sys_sbrk, sys_waitpid,
+    sys_yield,
 };
-use crate::task::inc_syscall_times;
+// use crate::task::inc_syscall_times;
 
 mod fs;
 mod process;
@@ -21,17 +22,20 @@ const SYSCALL_WAITPID: usize = 260;
 const SYSCALL_TASK_INFO: usize = 410;
 
 pub fn syscall(syscall_id: usize, args: [usize; 3]) -> isize {
-    inc_syscall_times(syscall_id);
+    // inc_syscall_times(syscall_id);
     match syscall_id {
-        SYSCALL_READ => sys_read(args[0], args[1] as *const u8, args[2]),
-        SYSCALL_WRITE => sys_write(args[0], args[1] as *const u8, args[2]),
-        SYSCALL_EXIT => sys_exit(args[0] as i32),
+        SYSCALL_READ => sys_read(args[0], args[1] as _, args[2]),
+        SYSCALL_WRITE => sys_write(args[0], args[1] as _, args[2]),
+        SYSCALL_EXIT => sys_exit(args[0] as _),
         SYSCALL_YIELD => sys_yield(),
-        SYSCALL_GET_TIME => sys_get_time(args[0] as *mut _, args[1]),
-        SYSCALL_SBRK => sys_sbrk(args[0] as i32),
+        SYSCALL_GET_TIME => sys_get_time(args[0] as _, args[1]),
+        SYSCALL_SBRK => sys_sbrk(args[0] as _),
         SYSCALL_MUNMAP => sys_munmap(args[0], args[1]),
         SYSCALL_MMAP => sys_mmap(args[0], args[1], args[2]),
-        SYSCALL_TASK_INFO => sys_task_info(args[0] as *mut _),
+        SYSCALL_FORK => sys_fork(),
+        SYSCALL_EXEC => sys_exec(args[0] as _),
+        SYSCALL_WAITPID => sys_waitpid(args[0] as isize, args[1] as _),
+        // SYSCALL_TASK_INFO => sys_task_info(args[0] as *mut _),
         syscall_id => unreachable!("Unsupported syscall {}", syscall_id),
     }
 }

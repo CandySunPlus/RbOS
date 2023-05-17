@@ -58,7 +58,10 @@ pub fn rust_main() -> ! {
     trap::init();
     trap::enable_timer_interrupt();
     timer::set_next_trigger();
-    task::run_first_task();
+    loader::list_apps();
+    task::run_tasks();
+    unreachable!("rust_main");
+    // task::run_first_task();
 }
 
 fn clear_bss() {

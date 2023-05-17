@@ -1,4 +1,4 @@
-use core::{str};
+use core::str;
 
 use crate::mm::translated_byte_buffer;
 use crate::print;

@@ -10,7 +10,6 @@ use crate::config::{TRAMPOLINE, TRAP_CONTEXT};
 use crate::syscall::syscall;
 use crate::task::{
     current_trap_cx, current_user_token, exit_current_and_run_next, suspend_current_and_run_next,
-    user_time_end, user_time_start,
 };
 use crate::timer::set_next_trigger;
 
@@ -39,11 +38,10 @@ pub fn init() {
 
 #[no_mangle]
 pub fn trap_handler() -> ! {
-    user_time_end();
     set_kernel_trap_entry();
-    let cx = current_trap_cx();
     let scause = scause::read();
     let stval = stval::read();
+    let cx = current_trap_cx();
 
     match scause.cause() {
         scause::Trap::Exception(scause::Exception::UserEnvCall) => {
@@ -55,11 +53,11 @@ pub fn trap_handler() -> ! {
         | scause::Trap::Exception(scause::Exception::LoadFault)
         | scause::Trap::Exception(scause::Exception::LoadPageFault) => {
             error!("[kernel] PageFault in application, bad addr = {:#x}, bad instruction = {:#x}, kernel killed it.", stval, cx.sepc);
-            exit_current_and_run_next();
+            exit_current_and_run_next(-2);
         }
         scause::Trap::Exception(scause::Exception::IllegalInstruction) => {
             error!("[kernel] IllegalInstruction in application, kernel killed it.");
-            exit_current_and_run_next();
+            exit_current_and_run_next(-3);
         }
         scause::Trap::Interrupt(scause::Interrupt::SupervisorTimer) => {
             set_next_trigger();
@@ -73,7 +71,6 @@ pub fn trap_handler() -> ! {
             );
         }
     }
-    user_time_start();
     trap_return()
 }
 
