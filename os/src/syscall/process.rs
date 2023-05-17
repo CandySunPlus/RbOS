@@ -64,3 +64,15 @@ pub fn sys_munmap(start: usize, len: usize) -> isize {
         -1
     }
 }
+
+pub fn sys_fork() -> isize {
+    0
+}
+
+pub fn sys_exec(path: *const u8) -> isize {
+    0
+}
+
+pub fn sys_waitpid(pid: isize, exit_code_ptr: *mut i32) -> isize {
+    0
+}

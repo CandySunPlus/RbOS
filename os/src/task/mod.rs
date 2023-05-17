@@ -17,6 +17,7 @@ use crate::trap::TrapContext;
 mod context;
 mod switch;
 mod task;
+mod pid;
 
 pub struct TaskManager {
     num_app: usize,
