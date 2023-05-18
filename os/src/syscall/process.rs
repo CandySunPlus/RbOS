@@ -57,15 +57,42 @@ pub fn sys_sbrk(size: i32) -> isize {
 }
 
 pub fn sys_mmap(start: usize, len: usize, port: usize) -> isize {
-    -1
+    if current_task()
+        .unwrap()
+        .inner_exclusive_access()
+        .mmap(start, len, port)
+    {
+        0
+    } else {
+        -1
+    }
 }
 
 pub fn sys_munmap(start: usize, len: usize) -> isize {
-    -1
+    if current_task()
+        .unwrap()
+        .inner_exclusive_access()
+        .munmap(start, len)
+    {
+        0
+    } else {
+        -1
+    }
+}
+
+pub fn sys_get_pid() -> isize {
+    current_task().unwrap().pid.0 as isize
 }
 
 pub fn sys_spawn(path: *const u8) -> isize {
-    -1
+    let path = translated_str(current_user_token(), path);
+    if let Some(elf_data) = get_app_data_by_name(path.as_str()) {
+        let task = current_task().unwrap();
+        task.spawn(elf_data);
+        0
+    } else {
+        -1
+    }
 }
 
 pub fn sys_set_priority(prio: isize) -> isize {

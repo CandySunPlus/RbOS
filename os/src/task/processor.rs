@@ -36,7 +36,7 @@ impl Processor {
     }
 
     pub fn current(&self) -> Option<Arc<TaskControlBlock>> {
-        self.current.as_ref().map(|task| task.clone())
+        self.current.as_ref().cloned()
     }
 }
 
