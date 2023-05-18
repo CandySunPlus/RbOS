@@ -97,7 +97,15 @@ pub fn sys_spawn(path: *const u8) -> isize {
 }
 
 pub fn sys_set_priority(prio: isize) -> isize {
-    -1
+    if prio >= 2 {
+        current_task()
+            .unwrap()
+            .inner_exclusive_access()
+            .set_priority(prio);
+        prio
+    } else {
+        -1
+    }
 }
 
 pub fn sys_fork() -> isize {

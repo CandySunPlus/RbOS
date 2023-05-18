@@ -7,7 +7,9 @@ use super::manager::fetch_task;
 use super::switch::__switch;
 use super::task::TaskControlBlock;
 use super::TaskStatus;
+use crate::config::BIG_STRIDE;
 use crate::sync::UPSafeCell;
+use crate::timer::get_time_us;
 use crate::trap::TrapContext;
 
 pub struct Processor {
@@ -48,6 +50,11 @@ pub fn run_tasks() {
             let mut task_inner = task.inner_exclusive_access();
             let next_task_ptr = &task_inner.task_cx as *const TaskContext;
             task_inner.task_status = TaskStatus::Running;
+            if task_inner.start_time == 0 {
+                task_inner.start_time = get_time_us();
+            }
+
+            task_inner.stride += BIG_STRIDE / task_inner.priority;
             drop(task_inner);
 
             processor.current = Some(task);

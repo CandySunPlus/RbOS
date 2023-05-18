@@ -7,8 +7,10 @@ use super::pid::{kstack_alloc, pid_alloc, KernelStack, PidHandle};
 use crate::config::{MAX_SYSCALL_NUM, TRAP_CONTEXT};
 use crate::mm::{MemorySet, PhysPageNum, VirtAddr, KERNEL_SPACE};
 use crate::sync::UPSafeCell;
+use crate::timer::get_time_us;
 use crate::trap::{trap_handler, TrapContext};
 
+#[allow(unused)]
 pub struct TaskInfo {
     status: TaskStatus,
     syscall_times: [u32; MAX_SYSCALL_NUM],
@@ -39,9 +41,7 @@ impl TaskControlBlock {
                 UPSafeCell::new(TaskControlBlockInner {
                     task_status: TaskStatus::Ready,
                     task_cx: TaskContext::goto_trap_return(kstack_top),
-                    user_time: 0,
-                    kernel_time: 0,
-                    task_time: 0,
+                    start_time: 0,
                     memory_set,
                     parent: None,
                     children: Default::default(),
@@ -49,6 +49,8 @@ impl TaskControlBlock {
                     base_size: user_sp,
                     program_brk: user_sp,
                     exit_code: 0,
+                    stride: 0,
+                    priority: 16,
                     heap_bottom: user_sp,
                     syscall_times: [0; MAX_SYSCALL_NUM],
                 })
@@ -121,9 +123,7 @@ impl TaskControlBlock {
                 UPSafeCell::new(TaskControlBlockInner {
                     task_status: TaskStatus::Ready,
                     task_cx: TaskContext::goto_trap_return(kernel_stack_top),
-                    user_time: 0,
-                    kernel_time: 0,
-                    task_time: 0,
+                    start_time: 0,
                     memory_set,
                     parent: Some(Arc::downgrade(self)),
                     children: vec::Vec::new(),
@@ -131,6 +131,8 @@ impl TaskControlBlock {
                     base_size: parent_inner.base_size,
                     program_brk: parent_inner.program_brk,
                     exit_code: 0,
+                    stride: 0,
+                    priority: 16,
                     heap_bottom: parent_inner.heap_bottom,
                     syscall_times: [0; MAX_SYSCALL_NUM],
                 })
@@ -186,15 +188,15 @@ impl TaskControlBlock {
                 UPSafeCell::new(TaskControlBlockInner {
                     task_status: TaskStatus::Ready,
                     task_cx,
-                    user_time: 0,
-                    kernel_time: 0,
-                    task_time: 0,
+                    start_time: 0,
                     memory_set,
                     parent: Some(Arc::downgrade(self)),
                     children: vec::Vec::new(),
                     trap_cx_ppn,
                     base_size: user_sp,
                     program_brk: parent_inner.program_brk,
+                    stride: 0,
+                    priority: 16,
                     exit_code: 0,
                     heap_bottom: parent_inner.heap_bottom,
                     syscall_times: [0; MAX_SYSCALL_NUM],
@@ -226,7 +228,7 @@ impl TaskControlBlock {
         TaskInfo {
             status: inner.task_status,
             syscall_times: inner.syscall_times,
-            time: inner.task_time,
+            time: get_time_us() - inner.start_time,
         }
     }
 }
@@ -234,9 +236,7 @@ impl TaskControlBlock {
 pub struct TaskControlBlockInner {
     pub task_status: TaskStatus,
     pub task_cx: TaskContext,
-    pub user_time: usize,
-    pub kernel_time: usize,
-    pub task_time: usize,
+    pub start_time: usize,
     pub memory_set: MemorySet,
     pub parent: Option<Weak<TaskControlBlock>>,
     pub children: vec::Vec<Arc<TaskControlBlock>>,
@@ -245,6 +245,8 @@ pub struct TaskControlBlockInner {
     pub program_brk: usize,
     pub exit_code: i32,
     pub heap_bottom: usize,
+    pub stride: u8,
+    pub priority: u8,
     pub syscall_times: [u32; MAX_SYSCALL_NUM],
 }
 
@@ -267,6 +269,10 @@ impl TaskControlBlockInner {
 
     pub fn is_zombie(&self) -> bool {
         self.task_status == TaskStatus::Zombie
+    }
+
+    pub fn set_priority(&mut self, priority: isize) {
+        self.priority = priority as u8;
     }
 }
 
