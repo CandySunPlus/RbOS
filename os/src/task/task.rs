@@ -9,6 +9,11 @@ use crate::mm::{MemorySet, PhysPageNum, VirtAddr, KERNEL_SPACE};
 use crate::sync::UPSafeCell;
 use crate::trap::{trap_handler, TrapContext};
 
+pub struct TaskInfo {
+    status: TaskStatus,
+    syscall_times: [u32; MAX_SYSCALL_NUM],
+    time: usize,
+}
 pub struct TaskControlBlock {
     pub pid: PidHandle,
     pub kernel_stack: KernelStack,
@@ -209,6 +214,20 @@ impl TaskControlBlock {
         );
 
         task_control_block
+    }
+
+    pub fn record_syscall_times(&self, syscall_id: usize) {
+        let mut parent_inner = self.inner_exclusive_access();
+        parent_inner.syscall_times[syscall_id] += 1;
+    }
+
+    pub fn get_taskinfo(&self) -> TaskInfo {
+        let inner = self.inner_exclusive_access();
+        TaskInfo {
+            status: inner.task_status,
+            syscall_times: inner.syscall_times,
+            time: inner.task_time,
+        }
     }
 }
 

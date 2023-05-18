@@ -15,7 +15,7 @@ use processor::schedule;
 pub use processor::{
     current_task, current_trap_cx, current_user_token, run_tasks, take_current_task,
 };
-pub use task::TaskStatus;
+pub use task::{TaskInfo, TaskStatus};
 
 use self::task::TaskControlBlock;
 use crate::loader::get_app_data_by_name;
