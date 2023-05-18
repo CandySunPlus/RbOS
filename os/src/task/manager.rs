@@ -31,11 +31,12 @@ impl TaskManager {
             .unwrap()
             .inner_exclusive_access()
             .stride;
+
         let mut index = 0;
+
         for (i, task) in self.ready_queue.iter().enumerate() {
             let inner = task.inner_exclusive_access();
-            let gap = (inner.stride - min_stride) as i8;
-            if gap <= 0 {
+            if inner.stride < min_stride {
                 min_stride = inner.stride;
                 index = i;
             }
