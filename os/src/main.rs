@@ -54,14 +54,14 @@ pub fn rust_main() -> ! {
     logging::init();
     info!("[kernel] Hello, world!");
     mm::init();
-    info!("[kernel] back to world!");
+    task::add_initproc();
+    info!("[kernel] after initproc!");
     trap::init();
     trap::enable_timer_interrupt();
     timer::set_next_trigger();
     loader::list_apps();
     task::run_tasks();
     unreachable!("rust_main");
-    // task::run_first_task();
 }
 
 fn clear_bss() {
