@@ -228,7 +228,7 @@ impl TaskControlBlock {
         TaskInfo {
             status: inner.task_status,
             syscall_times: inner.syscall_times,
-            time: get_time_us() - inner.start_time,
+            time: (get_time_us() - inner.start_time) / 1000,
         }
     }
 }
