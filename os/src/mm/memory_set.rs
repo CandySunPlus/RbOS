@@ -26,6 +26,7 @@ pub enum MapType {
 // |D|A|G|U|X|W|R|V|
 // +-+-+-+-+-+-+-+-+
 bitflags! {
+    #[derive(Clone, Copy, Debug, PartialEq, Eq)]
     pub struct MapPermission: u8 {
         const R = 1 << 1;
         const W = 1 << 2;
@@ -135,6 +136,15 @@ impl MapArea {
                 break;
             }
             current_vpn += 1;
+        }
+    }
+
+    pub fn from_another(another: &MapArea) -> Self {
+        Self {
+            vpn_range: another.vpn_range.clone(),
+            data_frames: BTreeMap::new(),
+            map_type: another.map_type,
+            map_perm: another.map_perm,
         }
     }
 }
@@ -495,5 +505,26 @@ impl MemorySet {
         }
 
         true
+    }
+
+    pub fn from_existed_user(user_space: &MemorySet) -> MemorySet {
+        let mut memory_set = Self::new_bare();
+
+        memory_set.map_trampoline();
+
+        for area in user_space.areas.iter() {
+            let new_area = MapArea::from_another(area);
+            memory_set.push(new_area, None);
+
+            for vpn in area.vpn_range {
+                let src_ppn = user_space.translate(vpn).unwrap().ppn();
+                let dst_ppn = memory_set.translate(vpn).unwrap().ppn();
+                dst_ppn
+                    .get_bytes_array()
+                    .copy_from_slice(src_ppn.get_bytes_array());
+            }
+        }
+
+        memory_set
     }
 }

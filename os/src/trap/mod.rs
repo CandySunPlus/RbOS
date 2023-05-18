@@ -41,12 +41,14 @@ pub fn trap_handler() -> ! {
     set_kernel_trap_entry();
     let scause = scause::read();
     let stval = stval::read();
-    let cx = current_trap_cx();
+    let mut cx = current_trap_cx();
 
     match scause.cause() {
         scause::Trap::Exception(scause::Exception::UserEnvCall) => {
             cx.sepc += 4;
-            cx.x[10] = syscall(cx.x[17], [cx.x[10], cx.x[11], cx.x[12]]) as usize;
+            let result = syscall(cx.x[17], [cx.x[10], cx.x[11], cx.x[12]]) as usize;
+            cx = current_trap_cx();
+            cx.x[10] = result;
         }
         scause::Trap::Exception(scause::Exception::StoreFault)
         | scause::Trap::Exception(scause::Exception::StorePageFault)
