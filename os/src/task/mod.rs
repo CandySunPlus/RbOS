@@ -50,7 +50,13 @@ pub fn exit_current_and_run_next(exit_code: i32) {
     inner.task_status = TaskStatus::Zombie;
     inner.exit_code = exit_code;
 
-    // TODO: INITPROC
+    {
+        let mut initproc_inner = INITPROC.inner_exclusive_access();
+        for child in inner.children.iter() {
+            child.inner_exclusive_access().parent = Some(Arc::downgrade(&INITPROC));
+            initproc_inner.children.push(child.clone());
+        }
+    }
 
     inner.children.clear();
     inner.memory_set.recycle_data_pages();

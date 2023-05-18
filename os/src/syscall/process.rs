@@ -64,6 +64,14 @@ pub fn sys_munmap(start: usize, len: usize) -> isize {
     -1
 }
 
+pub fn sys_spawn(path: *const u8) -> isize {
+    -1
+}
+
+pub fn sys_set_priority(prio: isize) -> isize {
+    -1
+}
+
 pub fn sys_fork() -> isize {
     let current_task = current_task().unwrap();
     let new_task = current_task.fork();
