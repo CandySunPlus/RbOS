@@ -43,7 +43,7 @@ _num_app:
     writeln!(
         f,
         r#"
-    .global_app_names
+    .global _app_names
 _app_names:"#
     )?;
 
