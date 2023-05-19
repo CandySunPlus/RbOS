@@ -44,5 +44,5 @@ pub fn sys_read(fd: usize, buf: *const u8, len: usize) -> isize {
 }
 
 pub fn sys_open(path: *const u8, flag: u32) -> isize {
-    -1
+    unimplemented!()
 }
