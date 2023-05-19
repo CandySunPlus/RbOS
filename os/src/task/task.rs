@@ -5,6 +5,8 @@ use core::cell::RefMut;
 use super::context::TaskContext;
 use super::pid::{kstack_alloc, pid_alloc, KernelStack, PidHandle};
 use crate::config::{MAX_SYSCALL_NUM, TRAP_CONTEXT};
+use crate::fs::stdio::{Stdin, Stdout};
+use crate::fs::File;
 use crate::mm::{MemorySet, PhysPageNum, VirtAddr, KERNEL_SPACE};
 use crate::sync::UPSafeCell;
 use crate::timer::get_time_us;
@@ -53,6 +55,14 @@ impl TaskControlBlock {
                     priority: 16,
                     heap_bottom: user_sp,
                     syscall_times: [0; MAX_SYSCALL_NUM],
+                    fd_table: vec![
+                        // stdin
+                        Some(Arc::new(Stdin)),
+                        // stdout
+                        Some(Arc::new(Stdout)),
+                        // stderr
+                        Some(Arc::new(Stdout)),
+                    ],
                 })
             },
         };
@@ -116,6 +126,16 @@ impl TaskControlBlock {
         let pid_handle = pid_alloc();
         let kernel_stack = kstack_alloc();
         let kernel_stack_top = kernel_stack.get_top();
+
+        let mut new_fd_table = vec::Vec::new();
+        for fd in parent_inner.fd_table.iter() {
+            if let Some(file) = fd {
+                new_fd_table.push(Some(file.clone()));
+            } else {
+                new_fd_table.push(None);
+            }
+        }
+
         let task_control_block = Arc::new(TaskControlBlock {
             pid: pid_handle,
             kernel_stack,
@@ -133,6 +153,7 @@ impl TaskControlBlock {
                     exit_code: 0,
                     stride: 0,
                     priority: 16,
+                    fd_table: new_fd_table,
                     heap_bottom: parent_inner.heap_bottom,
                     syscall_times: [0; MAX_SYSCALL_NUM],
                 })
@@ -198,6 +219,14 @@ impl TaskControlBlock {
                     stride: 0,
                     priority: 16,
                     exit_code: 0,
+                    fd_table: vec![
+                        // stdin
+                        Some(Arc::new(Stdin)),
+                        // stdout
+                        Some(Arc::new(Stdout)),
+                        // stderr
+                        Some(Arc::new(Stdout)),
+                    ],
                     heap_bottom: parent_inner.heap_bottom,
                     syscall_times: [0; MAX_SYSCALL_NUM],
                 })
@@ -248,6 +277,7 @@ pub struct TaskControlBlockInner {
     pub stride: u8,
     pub priority: u8,
     pub syscall_times: [u32; MAX_SYSCALL_NUM],
+    pub fd_table: vec::Vec<Option<Arc<dyn File + Send + Sync>>>,
 }
 
 impl TaskControlBlockInner {

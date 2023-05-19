@@ -14,6 +14,7 @@ extern crate alloc;
 
 mod config;
 mod console;
+mod fs;
 pub mod loader;
 mod logging;
 mod mm;

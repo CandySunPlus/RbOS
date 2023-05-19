@@ -7,6 +7,20 @@ use super::address::{PhysAddr, PhysPageNum, VirtPageNum};
 use super::frame_allocator::{frame_alloc, FrameTracker};
 use super::VirtAddr;
 
+pub struct UserBuffer {
+    pub buffers: vec::Vec<&'static mut [u8]>,
+}
+
+impl UserBuffer {
+    pub fn new(buffers: vec::Vec<&'static mut [u8]>) -> Self {
+        Self { buffers }
+    }
+
+    pub fn len(&self) -> usize {
+        self.buffers.iter().map(|i| i.len()).sum()
+    }
+}
+
 //  0
 //  0 1 2 3 4 5 6 7
 // +-+-+-+-+-+-+-+-+
