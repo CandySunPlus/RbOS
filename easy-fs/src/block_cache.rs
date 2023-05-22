@@ -2,6 +2,7 @@ use alloc::collections::VecDeque;
 use alloc::sync::Arc;
 use core::mem;
 
+use lazy_static::lazy_static;
 use spin::Mutex;
 
 use crate::block_dev::BlockDevice;
@@ -76,6 +77,12 @@ pub struct BlockCacheManager {
 const BLOCK_CACHE_SIZE: usize = 16;
 
 impl BlockCacheManager {
+    pub fn new() -> Self {
+        Self {
+            queue: VecDeque::new(),
+        }
+    }
+
     pub fn get_block_cache(
         &mut self,
         block_id: usize,
@@ -104,4 +111,18 @@ impl BlockCacheManager {
             block_cache
         }
     }
+}
+
+lazy_static! {
+    pub static ref BLOCK_CACHE_MANAGER: Mutex<BlockCacheManager> =
+        Mutex::new(BlockCacheManager::new());
+}
+
+pub fn get_block_cache(
+    block_id: usize,
+    block_device: Arc<dyn BlockDevice>,
+) -> Arc<Mutex<BlockCache>> {
+    BLOCK_CACHE_MANAGER
+        .lock()
+        .get_block_cache(block_id, block_device)
 }
