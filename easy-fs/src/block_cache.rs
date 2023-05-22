@@ -59,6 +59,13 @@ impl BlockCache {
     pub fn modify<T, V>(&mut self, offset: usize, f: impl FnOnce(&mut T) -> V) -> V {
         f(self.get_mut(offset))
     }
+
+    pub fn sync(&mut self) {
+        if self.modified {
+            self.modified = false;
+            self.block_device.write_block(self.block_id, &self.cache);
+        }
+    }
 }
 
 impl Drop for BlockCache {
@@ -125,4 +132,11 @@ pub fn get_block_cache(
     BLOCK_CACHE_MANAGER
         .lock()
         .get_block_cache(block_id, block_device)
+}
+
+pub fn block_cache_sync_all() {
+    let mamanger = BLOCK_CACHE_MANAGER.lock();
+    for (_, cache) in mamanger.queue.iter() {
+        cache.lock().sync();
+    }
 }
