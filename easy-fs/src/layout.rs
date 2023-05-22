@@ -100,6 +100,10 @@ impl DiskInode {
         self.type_ == DiskInodeType::File
     }
 
+    pub fn file_count(&self) -> usize {
+        self.size as usize / DIRENT_SIZE
+    }
+
     /// Get the block id of the inner block with the given inner id.
     pub fn get_block_id(&self, inner_id: u32, block_device: &Arc<dyn BlockDevice>) -> u32 {
         let inner_id = inner_id as usize;
@@ -347,6 +351,42 @@ impl DiskInode {
             start = end_current_block;
         }
         read_size
+    }
+
+    pub fn write_at(
+        &mut self,
+        offset: usize,
+        buf: &[u8],
+        block_device: &Arc<dyn BlockDevice>,
+    ) -> usize {
+        let mut start = offset;
+        let end = (offset + buf.len()).min(self.size as usize);
+        assert!(start <= end);
+        let mut start_block = start / BLOCK_SIZE;
+        let mut write_size = 0usize;
+        loop {
+            let mut end_current_block = (start / BLOCK_SIZE + 1) * BLOCK_SIZE;
+            end_current_block = end_current_block.min(end);
+            let blcok_write_size = end_current_block - start;
+            get_block_cache(
+                self.get_block_id(start_block as u32, block_device) as usize,
+                block_device.clone(),
+            )
+            .lock()
+            .modify(0, |data_block: &mut DataBlock| {
+                let src = &buf[write_size..write_size + blcok_write_size];
+                let dst =
+                    &mut data_block[start % BLOCK_SIZE..start % BLOCK_SIZE + blcok_write_size];
+                dst.copy_from_slice(src);
+            });
+            write_size += blcok_write_size;
+            if end_current_block == end {
+                break;
+            }
+            start_block += 1;
+            start = end_current_block;
+        }
+        write_size
     }
 }
 

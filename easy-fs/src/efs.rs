@@ -7,6 +7,7 @@ use crate::bitmap::Bitmap;
 use crate::block_cache::{block_cache_sync_all, get_block_cache};
 use crate::block_dev::BlockDevice;
 use crate::layout::{DataBlock, DiskInode, DiskInodeType, SuperBlock};
+use crate::vfs::Inode;
 use crate::BLOCK_SIZE;
 
 pub struct EasyFileSystem {
@@ -107,11 +108,14 @@ impl EasyFileSystem {
             })
     }
 
-    pub fn get_disk_inode_pos(&self, node_id: u32) -> (u32, usize) {
+    pub fn get_disk_inode_pos(&self, inode_id: u32) -> (u32, usize) {
         let inode_size = mem::size_of::<DiskInode>();
         let inodes_pre_block = (BLOCK_SIZE / inode_size) as u32;
-        let block_id = self.inode_area_start_block + node_id / inodes_pre_block;
-        (block_id, (node_id % inodes_pre_block) as usize * inode_size)
+        let block_id = self.inode_area_start_block + inode_id / inodes_pre_block;
+        (
+            block_id,
+            (inode_id % inodes_pre_block) as usize * inode_size,
+        )
     }
 
     pub fn get_data_block_id(&self, data_block_id: u32) -> u32 {
@@ -136,5 +140,12 @@ impl EasyFileSystem {
             &self.block_device,
             (block_id - self.data_area_start_block) as usize,
         )
+    }
+
+    pub fn root_inode(efs: &Arc<Mutex<Self>>) -> Inode {
+        let block_device = efs.lock().block_device.clone();
+        let (block_id, block_offset) = efs.lock().get_disk_inode_pos(0);
+
+        Inode::new(block_id, block_offset, efs.clone(), block_device)
     }
 }
