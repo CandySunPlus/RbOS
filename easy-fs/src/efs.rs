@@ -8,7 +8,7 @@ use crate::block_cache::{block_cache_sync_all, get_block_cache};
 use crate::block_dev::BlockDevice;
 use crate::layout::{DataBlock, DiskInode, DiskInodeType, SuperBlock};
 use crate::vfs::Inode;
-use crate::BLOCK_SIZE;
+use crate::BLOCK_SZ;
 
 pub struct EasyFileSystem {
     pub block_device: Arc<dyn BlockDevice>,
@@ -28,7 +28,7 @@ impl EasyFileSystem {
         let inode_num = inode_bitmap.maximum();
 
         let inode_area_blocks =
-            ((inode_num * mem::size_of::<DiskInode>() + BLOCK_SIZE - 1) / BLOCK_SIZE) as u32;
+            ((inode_num * mem::size_of::<DiskInode>() + BLOCK_SZ - 1) / BLOCK_SZ) as u32;
 
         let inode_total_blocks = inode_area_blocks + inode_bitmap_blocks;
         let data_total_blocks = total_blocks - inode_total_blocks - 1;
@@ -110,7 +110,7 @@ impl EasyFileSystem {
 
     pub fn get_disk_inode_pos(&self, inode_id: u32) -> (u32, usize) {
         let inode_size = mem::size_of::<DiskInode>();
-        let inodes_pre_block = (BLOCK_SIZE / inode_size) as u32;
+        let inodes_pre_block = (BLOCK_SZ / inode_size) as u32;
         let block_id = self.inode_area_start_block + inode_id / inodes_pre_block;
         (
             block_id,

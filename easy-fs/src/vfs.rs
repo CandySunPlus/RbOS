@@ -1,3 +1,5 @@
+use alloc::borrow::ToOwned;
+use alloc::string::String;
 use alloc::sync::Arc;
 use alloc::vec;
 
@@ -75,6 +77,7 @@ impl Inode {
         None
     }
 
+    /// List inodes from the current inode.
     pub fn ls(&self) -> vec::Vec<String> {
         let _fs = self.fs.lock();
         self.read_disk_inode(|disk_inode| {
@@ -94,6 +97,7 @@ impl Inode {
         })
     }
 
+    /// Increase the size of the inode.
     fn increase_size(
         &self,
         new_size: u32,
@@ -113,6 +117,7 @@ impl Inode {
         disk_inode.increase_size(new_size, v, &self.block_device);
     }
 
+    /// Create inode under the current inode with name.
     pub fn create(&self, name: &str) -> Option<Arc<Inode>> {
         let mut fs = self.fs.lock();
 
@@ -156,6 +161,7 @@ impl Inode {
         )))
     }
 
+    /// Clear the data in the inode.
     pub fn clear(&self) {
         let fs = self.fs.lock();
         self.modify_disk_inode(|disk_inode| {
@@ -166,5 +172,20 @@ impl Inode {
                 fs.dealloc_data(data_block);
             }
         });
+    }
+
+    /// Read data from the inode.
+    pub fn read_at(&self, offset: usize, buf: &mut [u8]) -> usize {
+        let _fs = self.fs.lock();
+        self.read_disk_inode(|disk_inode| disk_inode.read_at(offset, buf, &self.block_device))
+    }
+
+    /// Write data to the inode.
+    pub fn write_at(&self, offset: usize, buf: &[u8]) -> usize {
+        let mut fs = self.fs.lock();
+        self.modify_disk_inode(|disk_inode| {
+            self.increase_size((offset + buf.len()) as u32, disk_inode, &mut fs);
+            disk_inode.write_at(offset, buf, &self.block_device)
+        })
     }
 }

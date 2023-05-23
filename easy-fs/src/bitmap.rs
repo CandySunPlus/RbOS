@@ -2,9 +2,9 @@ use alloc::sync::Arc;
 
 use crate::block_cache::get_block_cache;
 use crate::block_dev::BlockDevice;
-use crate::BLOCK_SIZE;
+use crate::BLOCK_SZ;
 
-const BLOCK_BITS: usize = BLOCK_SIZE * 8;
+const BLOCK_BITS: usize = BLOCK_SZ * 8;
 
 pub struct Bitmap {
     start_block_id: usize,

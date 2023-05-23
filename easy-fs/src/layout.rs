@@ -4,12 +4,12 @@ use core::{fmt, mem, slice};
 
 use crate::block_cache::get_block_cache;
 use crate::block_dev::BlockDevice;
-use crate::BLOCK_SIZE;
+use crate::BLOCK_SZ;
 
 const EFS_MAGIC: u32 = 0x3b800001;
 const INODE_DIRECT_COUNT: usize = 28;
 const DIRECT_BOUND: usize = INODE_DIRECT_COUNT;
-const INODE_INDIRECT1_COUNT: usize = BLOCK_SIZE / 4;
+const INODE_INDIRECT1_COUNT: usize = BLOCK_SZ / 4;
 const INODE_INDIRECT2_COUNT: usize = INODE_INDIRECT1_COUNT * INODE_INDIRECT1_COUNT;
 const INDIRECT1_BOUND: usize = DIRECT_BOUND + INODE_INDIRECT1_COUNT;
 const NAME_LENGTH_LIMIT: usize = 27;
@@ -67,8 +67,8 @@ pub enum DiskInodeType {
     Directory,
 }
 
-type IndirectBlock = [u32; BLOCK_SIZE / 4];
-pub type DataBlock = [u8; BLOCK_SIZE];
+type IndirectBlock = [u32; BLOCK_SZ / 4];
+pub type DataBlock = [u8; BLOCK_SZ];
 
 #[repr(C)]
 pub struct DiskInode {
@@ -136,7 +136,7 @@ impl DiskInode {
     }
 
     fn _data_blocks(size: u32) -> u32 {
-        (size + BLOCK_SIZE as u32 - 1) / BLOCK_SIZE as u32
+        (size + BLOCK_SZ as u32 - 1) / BLOCK_SZ as u32
     }
 
     /// Return number of blocks needed include indriect1 and indirect2.
@@ -238,7 +238,7 @@ impl DiskInode {
     /// Clear the size to zero and reutrn blocks that should be dealloced.
     /// We will clear the block contents to zero later.
     pub fn clear_size(&mut self, block_device: &Arc<dyn BlockDevice>) -> vec::Vec<u32> {
-        let mut v = Vec::new();
+        let mut v = vec::Vec::new();
         let mut data_blocks = self.data_blocks() as usize;
         self.size = 0;
         let mut current_blocks = 0usize;
@@ -323,11 +323,11 @@ impl DiskInode {
             return 0;
         }
 
-        let mut start_block = start / BLOCK_SIZE;
+        let mut start_block = start / BLOCK_SZ;
         let mut read_size = 0usize;
 
         loop {
-            let mut end_current_block = (start_block + 1) * BLOCK_SIZE;
+            let mut end_current_block = (start_block + 1) * BLOCK_SZ;
             end_current_block = end_current_block.min(end);
             let block_read_size = end_current_block - start;
             let dst = &mut buf[read_size..read_size + block_read_size];
@@ -338,7 +338,7 @@ impl DiskInode {
             )
             .lock()
             .read(0, |data_block: &DataBlock| {
-                let src = &data_block[start % BLOCK_SIZE..start % BLOCK_SIZE + block_read_size];
+                let src = &data_block[start % BLOCK_SZ..start % BLOCK_SZ + block_read_size];
                 dst.copy_from_slice(src);
             });
             read_size += block_read_size;
@@ -362,10 +362,10 @@ impl DiskInode {
         let mut start = offset;
         let end = (offset + buf.len()).min(self.size as usize);
         assert!(start <= end);
-        let mut start_block = start / BLOCK_SIZE;
+        let mut start_block = start / BLOCK_SZ;
         let mut write_size = 0usize;
         loop {
-            let mut end_current_block = (start / BLOCK_SIZE + 1) * BLOCK_SIZE;
+            let mut end_current_block = (start / BLOCK_SZ + 1) * BLOCK_SZ;
             end_current_block = end_current_block.min(end);
             let blcok_write_size = end_current_block - start;
             get_block_cache(
@@ -375,8 +375,7 @@ impl DiskInode {
             .lock()
             .modify(0, |data_block: &mut DataBlock| {
                 let src = &buf[write_size..write_size + blcok_write_size];
-                let dst =
-                    &mut data_block[start % BLOCK_SIZE..start % BLOCK_SIZE + blcok_write_size];
+                let dst = &mut data_block[start % BLOCK_SZ..start % BLOCK_SZ + blcok_write_size];
                 dst.copy_from_slice(src);
             });
             write_size += blcok_write_size;

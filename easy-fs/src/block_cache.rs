@@ -6,10 +6,10 @@ use lazy_static::lazy_static;
 use spin::Mutex;
 
 use crate::block_dev::BlockDevice;
-use crate::BLOCK_SIZE;
+use crate::BLOCK_SZ;
 
 pub struct BlockCache {
-    cache: [u8; BLOCK_SIZE],
+    cache: [u8; BLOCK_SZ],
     block_id: usize,
     block_device: Arc<dyn BlockDevice>,
     modified: bool,
@@ -17,7 +17,7 @@ pub struct BlockCache {
 
 impl BlockCache {
     pub fn new(block_id: usize, block_device: Arc<dyn BlockDevice>) -> Self {
-        let mut cache = [0u8; BLOCK_SIZE];
+        let mut cache = [0u8; BLOCK_SZ];
         block_device.read_block(block_id, &mut cache);
         Self {
             cache,
@@ -36,7 +36,7 @@ impl BlockCache {
         T: Sized,
     {
         let type_size = mem::size_of::<T>();
-        assert!(offset + type_size <= BLOCK_SIZE);
+        assert!(offset + type_size <= BLOCK_SZ);
         let addr = self.addr_of_offset(offset);
         unsafe { &*(addr as *const T) }
     }
@@ -46,7 +46,7 @@ impl BlockCache {
         T: Sized,
     {
         let type_size = mem::size_of::<T>();
-        assert!(offset + type_size <= BLOCK_SIZE);
+        assert!(offset + type_size <= BLOCK_SZ);
         self.modified = true;
         let addr = self.addr_of_offset(offset);
         unsafe { &mut *(addr as *mut T) }
