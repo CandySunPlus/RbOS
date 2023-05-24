@@ -367,18 +367,17 @@ impl DiskInode {
         loop {
             let mut end_current_block = (start / BLOCK_SZ + 1) * BLOCK_SZ;
             end_current_block = end_current_block.min(end);
-            let blcok_write_size = end_current_block - start;
-            get_block_cache(
-                self.get_block_id(start_block as u32, block_device) as usize,
-                block_device.clone(),
-            )
-            .lock()
-            .modify(0, |data_block: &mut DataBlock| {
-                let src = &buf[write_size..write_size + blcok_write_size];
-                let dst = &mut data_block[start % BLOCK_SZ..start % BLOCK_SZ + blcok_write_size];
-                dst.copy_from_slice(src);
-            });
-            write_size += blcok_write_size;
+            let block_write_size = end_current_block - start;
+            let block_id = self.get_block_id(start_block as u32, block_device) as usize;
+            get_block_cache(block_id, block_device.clone())
+                .lock()
+                .modify(0, |data_block: &mut DataBlock| {
+                    let src = &buf[write_size..write_size + block_write_size];
+                    let dst =
+                        &mut data_block[start % BLOCK_SZ..start % BLOCK_SZ + block_write_size];
+                    dst.copy_from_slice(src);
+                });
+            write_size += block_write_size;
             if end_current_block == end {
                 break;
             }

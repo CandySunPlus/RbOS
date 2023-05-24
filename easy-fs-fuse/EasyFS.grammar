@@ -1,39 +1,39 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <ufwb version="1.24">
-    <grammar name="IMG grammar" start="id:36" author="Fengming Sun" uti="com.apple.disk-image-udif">
+    <grammar name="IMG grammar" start="id:70" author="Fengming Sun" uti="com.apple.disk-image-udif">
         <description>Grammar for IMG files</description>
-        <structure name="EasyFS" id="36" encoding="ISO_8859-1:1987" endian="little" signed="no">
-            <structure name="SuperBlock" id="37" length="512" alignment="0" consists-of="id:36">
-                <number name="magic" mustmatch="yes" id="38" type="integer" length="4" display="hex">
+        <structure name="EasyFS" id="70" encoding="ISO_8859-1:1987" endian="little" signed="no">
+            <structure name="SuperBlock" id="71" length="512" alignment="0" consists-of="id:70">
+                <number name="magic" id="72" type="integer" length="4" display="hex">
                     <fixedvalues>
                         <fixedvalue name="magic" value="0x3B800001"/>
                     </fixedvalues>
                 </number>
-                <number name="total_blocks" id="39" type="integer" length="4"/>
-                <number name="inode_bitmap_blocks" id="40" type="integer" length="4"/>
-                <number name="inode_area_blocks" id="41" type="integer" length="4"/>
-                <number name="data_bitmap_blocks" id="42" type="integer" length="4"/>
-                <number name="data_area_blocks" id="43" type="integer" length="4"/>
+                <number name="total_blocks" id="73" type="integer" length="4"/>
+                <number name="inode_bitmap_blocks" id="74" type="integer" length="4"/>
+                <number name="inode_area_blocks" id="75" type="integer" length="4"/>
+                <number name="data_bitmap_blocks" id="76" type="integer" length="4"/>
+                <number name="data_area_blocks" id="77" type="integer" length="4"/>
             </structure>
-            <structure name="InodeBitmapBlock" id="45" length="512" consists-of="id:36">
-                <number name="BitmapBlock" id="46" repeatmin="0" repeatmax="64" type="integer" length="8"/>
+            <structure name="InodeBitmapBlock" id="79" length="512" consists-of="id:70">
+                <number name="BitmapBlock" id="80" repeatmin="0" repeatmax="64" type="integer" length="8"/>
             </structure>
-            <structure name="InodeAreaBlocks" id="48">
-                <structure name="InodeAreaBlock" id="49" length="512" repeatmin="0" repeatmax="1024">
-                    <structure name="DiskInode" id="50" length="128" repeatmax="-1">
-                        <number name="size" id="51" type="integer" length="4"/>
-                        <number name="direct" id="52" repeatmin="0" repeatmax="28" type="integer" length="4"/>
-                        <number name="indirect1" id="53" type="integer" length="4"/>
-                        <number name="indirect2" id="54" type="integer" length="4"/>
-                        <number name="type" id="55" type="integer" length="1"/>
+            <structure name="InodeAreaBlocks" id="82">
+                <structure name="InodeAreaBlock" id="83" length="512" repeatmin="0" repeatmax="1024">
+                    <structure name="DiskInode" id="84" length="128" repeatmax="-1">
+                        <number name="size" id="85" type="integer" length="4"/>
+                        <number name="direct" id="86" repeatmin="0" repeatmax="28" type="integer" length="4"/>
+                        <number name="indirect1" id="87" type="integer" length="4"/>
+                        <number name="indirect2" id="88" type="integer" length="4"/>
+                        <number name="type" id="89" type="integer" length="1"/>
                     </structure>
                 </structure>
             </structure>
-            <structure name="DataBitmapBlock" id="62">
-                <number name="BitmapBlock" id="64" repeatmin="0" repeatmax="64" type="integer" length="8"/>
+            <structure name="DataBitmapBlock" id="93">
+                <number name="BitmapBlock" id="94" repeatmin="0" repeatmax="64" type="integer" length="8"/>
             </structure>
-            <structure name="DataAreaBlocks" id="65">
-                <structure name="DataAreaBlock" id="67" length="512" repeatmax="-1"/>
+            <structure name="DataAreaBlocks" id="96">
+                <structure name="DataAreaBlock" id="97" length="512" repeatmax="-1"/>
             </structure>
         </structure>
     </grammar>
