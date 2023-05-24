@@ -5,7 +5,7 @@ use alloc::vec;
 
 use spin::{Mutex, MutexGuard};
 
-use crate::block_cache::get_block_cache;
+use crate::block_cache::{block_cache_sync_all, get_block_cache};
 use crate::block_dev::BlockDevice;
 use crate::efs::EasyFileSystem;
 use crate::layout::{DirEntry, DiskInode, DiskInodeType, DIRENT_SIZE};
@@ -172,6 +172,7 @@ impl Inode {
                 fs.dealloc_data(data_block);
             }
         });
+        block_cache_sync_all();
     }
 
     /// Read data from the inode.
@@ -183,9 +184,12 @@ impl Inode {
     /// Write data to the inode.
     pub fn write_at(&self, offset: usize, buf: &[u8]) -> usize {
         let mut fs = self.fs.lock();
-        self.modify_disk_inode(|disk_inode| {
+        let size = self.modify_disk_inode(|disk_inode| {
             self.increase_size((offset + buf.len()) as u32, disk_inode, &mut fs);
             disk_inode.write_at(offset, buf, &self.block_device)
-        })
+        });
+
+        block_cache_sync_all();
+        size
     }
 }

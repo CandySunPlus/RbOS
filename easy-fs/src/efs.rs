@@ -127,7 +127,7 @@ impl EasyFileSystem {
     }
 
     pub fn alloc_data(&self) -> u32 {
-        self.inode_bitmap.alloc(&self.block_device).unwrap() as u32 + self.data_area_start_block
+        self.data_bitmap.alloc(&self.block_device).unwrap() as u32 + self.data_area_start_block
     }
 
     pub fn dealloc_data(&self, block_id: u32) {
