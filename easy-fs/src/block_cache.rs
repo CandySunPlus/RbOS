@@ -70,10 +70,7 @@ impl BlockCache {
 
 impl Drop for BlockCache {
     fn drop(&mut self) {
-        if self.modified {
-            self.modified = false;
-            self.block_device.write_block(self.block_id, &self.cache);
-        }
+        self.sync()
     }
 }
 

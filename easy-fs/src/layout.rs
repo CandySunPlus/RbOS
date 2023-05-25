@@ -219,13 +219,14 @@ impl DiskInode {
                 while (a0 < a1) || (a0 == a1 && b0 < b1) {
                     if b0 == 0 {
                         indirect2[a0] = new_blocks.next().unwrap();
-                    } else {
-                        get_block_cache(indirect2[a0] as usize, block_device.clone())
-                            .lock()
-                            .modify(0, |indirect1: &mut IndirectBlock| {
-                                indirect1[b0] = new_blocks.next().unwrap();
-                            });
                     }
+
+                    get_block_cache(indirect2[a0] as usize, block_device.clone())
+                        .lock()
+                        .modify(0, |indirect1: &mut IndirectBlock| {
+                            indirect1[b0] = new_blocks.next().unwrap();
+                        });
+
                     b0 += 1;
                     if b0 == INODE_INDIRECT1_COUNT {
                         b0 = 0;

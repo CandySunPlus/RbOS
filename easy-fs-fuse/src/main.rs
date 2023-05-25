@@ -128,29 +128,29 @@ mod tests {
                 str.push(char::from('0' as u8 + rand::random::<u8>() % 10));
             }
             filea.write_at(0, str.as_bytes());
-            // let mut read_buffer = [0u8; 127];
-            // let mut offset = 0usize;
-            // let mut read_str = String::new();
-            // loop {
-            //     let len = filea.read_at(offset, &mut read_buffer);
-            //     if len == 0 {
-            //         break;
-            //     }
-            //     assert_eq!(&str.as_bytes()[offset..offset + len], &read_buffer[..len]);
-            //     offset += len;
-            // read_str.push_str(core::str::from_utf8(&read_buffer[..len]).unwrap());
-            // }
-            // assert_eq!(str, read_str);
+            let mut read_buffer = [0u8; 127];
+            let mut offset = 0usize;
+            let mut read_str = String::new();
+            loop {
+                let len = filea.read_at(offset, &mut read_buffer);
+                if len == 0 {
+                    break;
+                }
+                assert_eq!(&str.as_bytes()[offset..offset + len], &read_buffer[..len]);
+                offset += len;
+                read_str.push_str(core::str::from_utf8(&read_buffer[..len]).unwrap());
+            }
+            assert_eq!(str, read_str);
         };
 
-        // random_str_test(4 * BLOCK_SZ);
-        // random_str_test(8 * BLOCK_SZ + BLOCK_SZ / 2);
+        random_str_test(4 * BLOCK_SZ);
+        random_str_test(8 * BLOCK_SZ + BLOCK_SZ / 2);
         random_str_test(157 * BLOCK_SZ);
-        // random_str_test(70 * BLOCK_SZ + BLOCK_SZ / 7);
-        // random_str_test((12 + 128) * BLOCK_SZ);
-        // random_str_test(280 * BLOCK_SZ);
-        // random_str_test(1000 * BLOCK_SZ);
-        // random_str_test(2000 * BLOCK_SZ);
+        random_str_test(70 * BLOCK_SZ + BLOCK_SZ / 7);
+        random_str_test((12 + 128) * BLOCK_SZ);
+        random_str_test(280 * BLOCK_SZ);
+        random_str_test(1000 * BLOCK_SZ);
+        random_str_test(2000 * BLOCK_SZ);
 
         Ok(())
     }
