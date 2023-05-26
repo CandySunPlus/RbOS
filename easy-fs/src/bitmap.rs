@@ -38,9 +38,11 @@ impl Bitmap {
                     if let Some((bits64_pos, inner_pos)) = bitmap_block
                         .iter()
                         .enumerate()
+                        // skip allocated groups
                         .find(|(_, bits64)| **bits64 != u64::MAX)
                         .map(|(bits64_pos, bits64)| (bits64_pos, bits64.trailing_ones() as usize))
                     {
+                        // set the new bit to 1
                         bitmap_block[bits64_pos] |= 1u64 << inner_pos;
                         Some(block_id * BLOCK_BITS + bits64_pos * 64 + inner_pos)
                     } else {
