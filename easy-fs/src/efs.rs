@@ -45,6 +45,7 @@ impl EasyFileSystem {
             block_device: block_device.clone(),
             inode_bitmap,
             data_bitmap,
+            // blocks 0 is super block, we need +1 to skip it
             inode_area_start_block: 1 + inode_bitmap_blocks,
             data_area_start_block: 1 + inode_total_blocks + data_bitmap_blocks,
         };
