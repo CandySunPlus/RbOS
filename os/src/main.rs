@@ -10,6 +10,8 @@ use log::{error, info};
 use sbi::shutdown;
 use stack_trace::print_stack_trace;
 
+use crate::fs::list_apps;
+
 extern crate alloc;
 
 mod config;
@@ -56,12 +58,12 @@ pub fn rust_main() -> ! {
     logging::init();
     info!("[kernel] Hello, world!");
     mm::init();
-    task::add_initproc();
     info!("[kernel] after initproc!");
     trap::init();
     trap::enable_timer_interrupt();
     timer::set_next_trigger();
-    loader::list_apps();
+    list_apps();
+    task::add_initproc();
     task::run_tasks();
     unreachable!("rust_main");
 }

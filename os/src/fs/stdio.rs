@@ -57,7 +57,7 @@ impl File for Stdout {
 
     fn write(&self, buf: UserBuffer) -> usize {
         for buffer in buf.buffers.iter() {
-            print!("{}", core::str::from_utf8(*buffer).unwrap());
+            print!("{}", core::str::from_utf8(buffer).unwrap());
         }
         buf.len()
     }

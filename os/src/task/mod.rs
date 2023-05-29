@@ -18,7 +18,7 @@ pub use processor::{
 pub use task::{TaskInfo, TaskStatus};
 
 use self::task::TaskControlBlock;
-use crate::loader::get_app_data_by_name;
+use crate::fs::{open_file, OpenFlags};
 
 pub fn suspend_current_and_run_next() {
     let task = take_current_task().unwrap();
@@ -69,9 +69,11 @@ pub fn exit_current_and_run_next(exit_code: i32) {
 }
 
 lazy_static! {
-    pub static ref INITPROC: Arc<TaskControlBlock> = Arc::new(TaskControlBlock::new(
-        get_app_data_by_name("ch5b_initproc").unwrap()
-    ));
+    pub static ref INITPROC: Arc<TaskControlBlock> = Arc::new({
+        let inode = open_file("ch6b_iniproc", OpenFlags::RDONLY).unwrap();
+        let v = inode.read_all();
+        TaskControlBlock::new(v.as_slice())
+    });
 }
 
 pub fn add_initproc() {

@@ -1,15 +1,15 @@
-use self::fs::{sys_open, sys_read, sys_write};
+use self::fs::{sys_close, sys_open, sys_read, sys_write};
 use self::process::{
     sys_exec, sys_exit, sys_fork, sys_get_pid, sys_get_time, sys_mmap, sys_munmap, sys_sbrk,
     sys_set_priority, sys_spawn, sys_task_info, sys_waitpid, sys_yield,
 };
 use crate::task::current_task;
-// use crate::task::inc_syscall_times;
 
 mod fs;
 mod process;
 
 const SYSCALL_OPEN: usize = 56;
+const SYSCALL_CLOSE: usize = 57;
 const SYSCALL_READ: usize = 63;
 const SYSCALL_WRITE: usize = 64;
 const SYSCALL_EXIT: usize = 93;
@@ -30,6 +30,7 @@ pub fn syscall(syscall_id: usize, args: [usize; 3]) -> isize {
     current_task().unwrap().record_syscall_times(syscall_id);
     match syscall_id {
         SYSCALL_OPEN => sys_open(args[0] as _, args[1] as _),
+        SYSCALL_CLOSE => sys_close(args[0] as _),
         SYSCALL_READ => sys_read(args[0], args[1] as _, args[2]),
         SYSCALL_WRITE => sys_write(args[0], args[1] as _, args[2]),
         SYSCALL_EXIT => sys_exit(args[0] as _),
