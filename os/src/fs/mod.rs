@@ -1,5 +1,6 @@
 use crate::mm::UserBuffer;
 
+mod inode;
 pub mod stdio;
 
 pub trait File: Send + Sync {

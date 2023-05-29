@@ -11,7 +11,7 @@ use riscv::register::satp;
 use super::address::{PhysAddr, PhysPageNum, VPNRange, VirtAddr, VirtPageNum};
 use super::frame_allocator::{frame_alloc, FrameTracker};
 use super::page_table::{PTEFlags, PageTable, PageTableEntry};
-use crate::config::{MEMORY_END, PAGE_SIZE, TRAMPOLINE, TRAP_CONTEXT, USER_STACK_SIZE};
+use crate::config::{MEMORY_END, MMIO, PAGE_SIZE, TRAMPOLINE, TRAP_CONTEXT, USER_STACK_SIZE};
 use crate::sync::UPSafeCell;
 
 #[derive(Clone, Copy, PartialEq, Debug)]
@@ -167,6 +167,10 @@ lazy_static! {
         Arc::new(unsafe { UPSafeCell::new(MemorySet::new_kernel()) });
 }
 
+pub fn kernel_token() -> usize {
+    KERNEL_SPACE.exclusive_access().token()
+}
+
 pub struct MemorySet {
     page_table: PageTable,
     areas: vec::Vec<MapArea>,
@@ -317,6 +321,20 @@ impl MemorySet {
             ),
             None,
         );
+
+        info!("mapping memory mapped registers");
+
+        for &pair in MMIO {
+            memory_set.push(
+                MapArea::new(
+                    pair.0.into(),
+                    (pair.0 + pair.1).into(),
+                    MapType::Identical,
+                    MapPermission::R | MapPermission::W,
+                ),
+                None,
+            );
+        }
 
         memory_set
     }

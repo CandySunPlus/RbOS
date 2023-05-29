@@ -17,3 +17,5 @@ pub const TRAMPOLINE: usize = usize::MAX - PAGE_SIZE + 1;
 pub const TRAP_CONTEXT: usize = TRAMPOLINE - PAGE_SIZE;
 
 pub const BIG_STRIDE: u8 = u8::MAX;
+
+pub const MMIO: &[(usize, usize)] = &[(0x10001000, 0x1000)];
