@@ -152,6 +152,7 @@ impl Inode {
         });
 
         let (block_id, block_offset) = fs.get_disk_inode_pos(new_inode_id);
+        block_cache_sync_all();
 
         Some(Arc::new(Self::new(
             block_id,

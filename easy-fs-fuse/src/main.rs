@@ -42,9 +42,12 @@ struct Cli {
 }
 
 fn easy_fs_pack() -> io::Result<()> {
-    let cli = Cli::parse();
-    let source_path = cli.source;
-    let target_path = cli.target;
+    // let cli = Cli::parse();
+    // let source_path = cli.source;
+    // let target_path = cli.target;
+
+    let source_path = "../user/build/app/";
+    let target_path = "../user/target/riscv64gc-unknown-none-elf/release/";
 
     println!("source_path = {source_path}\ntarget_path = {target_path}");
 
@@ -58,7 +61,7 @@ fn easy_fs_pack() -> io::Result<()> {
         f
     })));
 
-    let efs = EasyFileSystem::create(block_file, 16 * 2048, 1);
+    let efs = EasyFileSystem::create(block_file, 16 * 1024, 1);
     let root_inode = Arc::new(EasyFileSystem::root_inode(&efs));
     let apps = read_dir(source_path)?
         .map(|dir_entry| {
@@ -68,12 +71,21 @@ fn easy_fs_pack() -> io::Result<()> {
         })
         .collect::<Vec<_>>();
 
-    for app in apps {
+    for (idx, app) in apps.iter().enumerate() {
         let mut host_file = File::open(format!("{target_path}{app}")).unwrap();
         let mut all_data = Vec::new();
         host_file.read_to_end(&mut all_data).unwrap();
         let inode = root_inode.create(app.as_str()).unwrap();
-        inode.write_at(0, all_data.as_slice());
+        if idx == 23 {
+            inode.write_at(0, all_data.as_slice());
+            break;
+        } else {
+            inode.write_at(0, all_data.as_slice());
+        }
+    }
+
+    for name in root_inode.ls() {
+        println!("app: {}", name);
     }
 
     Ok(())
