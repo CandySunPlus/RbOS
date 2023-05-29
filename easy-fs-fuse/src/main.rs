@@ -71,17 +71,12 @@ fn easy_fs_pack() -> io::Result<()> {
         })
         .collect::<Vec<_>>();
 
-    for (idx, app) in apps.iter().enumerate() {
+    for app in apps {
         let mut host_file = File::open(format!("{target_path}{app}")).unwrap();
         let mut all_data = Vec::new();
         host_file.read_to_end(&mut all_data).unwrap();
         let inode = root_inode.create(app.as_str()).unwrap();
-        if idx == 23 {
-            inode.write_at(0, all_data.as_slice());
-            break;
-        } else {
-            inode.write_at(0, all_data.as_slice());
-        }
+        inode.write_at(0, all_data.as_slice());
     }
 
     for name in root_inode.ls() {
